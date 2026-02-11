@@ -1,11 +1,11 @@
 <?php
 // 引入认证工具
-// require_once __DIR__ . '/app/includes/auth.php';
+require_once __DIR__ . '/app/includes/auth.php';
 
 // 检查是否已登录
-// if (!isLoggedIn()) {
-//     redirectToLogin();
-// }
+if (!isLoggedIn()) {
+    redirectToLogin();
+}
 ?>
 
 <?php
@@ -810,10 +810,6 @@ require_once __DIR__ . '/app/includes/footer.php';
     </style>
     
     <script>
-        // =======================
-        // 全局变量和初始化
-        // =======================
-        
         // 模拟他评数据
         const evaluationData = [
             {
@@ -838,29 +834,8 @@ require_once __DIR__ . '/app/includes/footer.php';
             }
         ];
         
-        // 他评功能变量
         let currentEvaluationIndex = 0;
         let typingInterval = null;
-        
-        // 我们同在功能变量
-        let selectedColor = '#ffd700';
-        let useGradient = true; // 默认使用渐变色
-        let gradientStops = [
-            { color: '#ff0000', position: 0, opacity: 100, brightness: 50 },
-            { color: '#ffff00', position: 50, opacity: 100, brightness: 50 },
-            { color: '#0000ff', position: 100, opacity: 100, brightness: 50 }
-        ];
-        let currentStopIndex = 1; // 当前选中的色标
-        let currentStep = 'color-selection';
-        let creationType = 'draw';
-        let drawingCanvas = null;
-        let ctx = null;
-        let isDrawing = false;
-        let brushSize = 5;
-        
-        // =======================
-        // 标签页和步骤导航
-        // =======================
         
         // 标签页切换
         document.querySelectorAll('.tab').forEach(tab => {
@@ -880,79 +855,6 @@ require_once __DIR__ . '/app/includes/footer.php';
                 }
             });
         });
-        
-        // 步骤导航初始化
-        function initStepNavigation() {
-            // 下一步到创造内容
-            document.getElementById('next-to-creation').addEventListener('click', function() {
-                goToStep('creation');
-            });
-            
-            // 上一步到颜色选择
-            document.getElementById('back-to-color').addEventListener('click', function() {
-                goToStep('color-selection');
-            });
-            
-            // 下一步到预览
-            document.getElementById('next-to-preview').addEventListener('click', function() {
-                generatePreview();
-                goToStep('preview');
-            });
-            
-            // 上一步到创造内容
-            document.getElementById('back-to-creation').addEventListener('click', function() {
-                goToStep('creation');
-            });
-            
-            // 完成创作
-            document.getElementById('complete-creation').addEventListener('click', function() {
-                submitCreation();
-            });
-            
-            // 创造类型切换
-            document.querySelectorAll('.creation-tab').forEach(tab => {
-                tab.addEventListener('click', function() {
-                    const type = this.getAttribute('data-creation-type');
-                    switchCreationType(type);
-                });
-            });
-        }
-        
-        // 切换步骤
-        function goToStep(step) {
-            // 更新步骤指示器
-            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-            document.querySelector(`.step[data-step="${step}"]`).classList.add('active');
-            
-            // 更新步骤内容
-            document.querySelectorAll('.step-content').forEach(content => content.classList.remove('active'));
-            document.getElementById(step).classList.add('active');
-            
-            currentStep = step;
-            
-            // 初始化对应步骤的功能
-            if (step === 'creation') {
-                initDrawing();
-                initWriting();
-            }
-        }
-        
-        // 切换创造类型
-        function switchCreationType(type) {
-            // 更新标签
-            document.querySelectorAll('.creation-tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelector(`.creation-tab[data-creation-type="${type}"]`).classList.add('active');
-            
-            // 更新内容
-            document.querySelectorAll('.creation-content').forEach(content => content.classList.remove('active'));
-            document.getElementById(`${type}-content`).classList.add('active');
-            
-            creationType = type;
-        }
-        
-        // =======================
-        // 他评功能
-        // =======================
         
         // 逐字显示评价内容
         function typeWriter(text, element, speed = 50) {
@@ -1011,9 +913,21 @@ require_once __DIR__ . '/app/includes/footer.php';
             */
         });
         
-        // =======================
-        // 渐变处理
-        // =======================
+        // 我们同在功能
+        let selectedColor = '#ffd700';
+        let useGradient = true; // 默认使用渐变色
+        let gradientStops = [
+            { color: '#ff0000', position: 0, opacity: 100, brightness: 50 },
+            { color: '#ffff00', position: 50, opacity: 100, brightness: 50 },
+            { color: '#0000ff', position: 100, opacity: 100, brightness: 50 }
+        ];
+        let currentStopIndex = 1; // 当前选中的色标
+        let currentStep = 'color-selection';
+        let creationType = 'draw';
+        let drawingCanvas = null;
+        let ctx = null;
+        let isDrawing = false;
+        let brushSize = 5;
         
         // 初始化渐变选择器
         function initGradientPicker() {
@@ -1172,6 +1086,34 @@ require_once __DIR__ . '/app/includes/footer.php';
             updateColorStopControls();
         }
         
+        // 插值计算颜色
+        function interpolateColor(color1, color2, factor) {
+            const parseColor = (color) => {
+                const hex = color.replace('#', '');
+                return {
+                    r: parseInt(hex.substring(0, 2), 16),
+                    g: parseInt(hex.substring(2, 4), 16),
+                    b: parseInt(hex.substring(4, 6), 16)
+                };
+            };
+            
+            const formatColor = (color) => {
+                return '#' + [color.r, color.g, color.b].map(c => {
+                    const hex = c.toString(16);
+                    return hex.length === 1 ? '0' + hex : hex;
+                }).join('');
+            };
+            
+            const c1 = parseColor(color1);
+            const c2 = parseColor(color2);
+            
+            return formatColor({
+                r: Math.round(c1.r + (c2.r - c1.r) * factor),
+                g: Math.round(c1.g + (c2.g - c1.g) * factor),
+                b: Math.round(c1.b + (c2.b - c1.b) * factor)
+            });
+        }
+        
         // 更新渐变条
         function updateGradientBar() {
             const gradientBar = document.getElementById('gradient-bar');
@@ -1255,7 +1197,13 @@ require_once __DIR__ . '/app/includes/footer.php';
             const gradientPreview = document.getElementById('gradient-preview');
             
             // 创建线性渐变（从左上到右下）
-            gradientPreview.style.background = generateGradientCSS(gradientStops, '135deg');
+            const gradient = gradientStops.map(stop => {
+                const hsl = hexToHsl(stop.color);
+                const adjustedColor = hslToHex(hsl.h, hsl.s, stop.brightness);
+                return `${adjustedColor}${Math.round(stop.opacity / 100 * 255).toString(16).padStart(2, '0')} ${stop.position}%`;
+            }).join(', ');
+            
+            gradientPreview.style.background = `linear-gradient(135deg, ${gradient})`;
             
             // 更新selectedColor为第一个色标的颜色（用于绘画）
             if (gradientStops.length > 0) {
@@ -1277,9 +1225,63 @@ require_once __DIR__ . '/app/includes/footer.php';
             }
         }
         
-        // =======================
-        // 绘画功能
-        // =======================
+        // HSL转HEX
+        function hslToHex(h, s, l) {
+            h /= 360;
+            s /= 100;
+            l /= 100;
+            let r, g, b;
+            if (s === 0) {
+                r = g = b = l;
+            } else {
+                const hue2rgb = (p, q, t) => {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1/6) return p + (q - p) * 6 * t;
+                    if (t < 1/2) return q;
+                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                    return p;
+                };
+                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                const p = 2 * l - q;
+                r = hue2rgb(p, q, h + 1/3);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1/3);
+            }
+            const toHex = x => {
+                const hex = Math.round(x * 255).toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            };
+            return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+        }
+        
+        // HEX转HSL
+        function hexToHsl(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            let r = parseInt(result[1], 16) / 255;
+            let g = parseInt(result[2], 16) / 255;
+            let b = parseInt(result[3], 16) / 255;
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+            if (max === min) {
+                h = s = 0;
+            } else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            return {
+                h: h * 360,
+                s: s * 100,
+                l: l * 100
+            };
+        }
         
         // 初始化绘画功能
         function initDrawing() {
@@ -1298,7 +1300,13 @@ require_once __DIR__ . '/app/includes/footer.php';
             }
             
             // 设置canvas背景为线性渐变
-            drawingCanvas.style.background = generateGradientCSS(gradientStops, '135deg');
+            const gradient = gradientStops.map(stop => {
+                const hsl = hexToHsl(stop.color);
+                const adjustedColor = hslToHex(hsl.h, hsl.s, stop.brightness);
+                return `${adjustedColor} ${stop.position}%`;
+            }).join(', ');
+            
+            drawingCanvas.style.background = `linear-gradient(135deg, ${gradient})`;
             
             // 清空画布并覆盖一层白色（稍后我们会用destination-out模式擦除）
             clearCanvas();
@@ -1411,10 +1419,6 @@ require_once __DIR__ . '/app/includes/footer.php';
             ctx.fillRect(0, 0, drawingCanvas.width, drawingCanvas.height);
         }
         
-        // =======================
-        // 写字功能
-        // =======================
-        
         // 初始化写字功能
         function initWriting() {
             const messageInput = document.getElementById('message-input');
@@ -1425,128 +1429,74 @@ require_once __DIR__ . '/app/includes/footer.php';
             });
         }
         
-        // =======================
-        // 颜色处理工具
-        // =======================
-        
-        // 插值计算颜色
-        function interpolateColor(color1, color2, factor) {
-            const parseColor = (color) => {
-                const hex = color.replace('#', '');
-                return {
-                    r: parseInt(hex.substring(0, 2), 16),
-                    g: parseInt(hex.substring(2, 4), 16),
-                    b: parseInt(hex.substring(4, 6), 16)
-                };
-            };
+        // 步骤导航
+        function initStepNavigation() {
+            // 下一步到创造内容
+            document.getElementById('next-to-creation').addEventListener('click', function() {
+                goToStep('creation');
+            });
             
-            const formatColor = (color) => {
-                return '#' + [color.r, color.g, color.b].map(c => {
-                    const hex = c.toString(16);
-                    return hex.length === 1 ? '0' + hex : hex;
-                }).join('');
-            };
+            // 上一步到颜色选择
+            document.getElementById('back-to-color').addEventListener('click', function() {
+                goToStep('color-selection');
+            });
             
-            const c1 = parseColor(color1);
-            const c2 = parseColor(color2);
+            // 下一步到预览
+            document.getElementById('next-to-preview').addEventListener('click', function() {
+                generatePreview();
+                goToStep('preview');
+            });
             
-            return formatColor({
-                r: Math.round(c1.r + (c2.r - c1.r) * factor),
-                g: Math.round(c1.g + (c2.g - c1.g) * factor),
-                b: Math.round(c1.b + (c2.b - c1.b) * factor)
+            // 上一步到创造内容
+            document.getElementById('back-to-creation').addEventListener('click', function() {
+                goToStep('creation');
+            });
+            
+            // 完成创作
+            document.getElementById('complete-creation').addEventListener('click', function() {
+                submitCreation();
+            });
+            
+            // 创造类型切换
+            document.querySelectorAll('.creation-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const type = this.getAttribute('data-creation-type');
+                    switchCreationType(type);
+                });
             });
         }
         
-        // HSL转HEX
-        function hslToHex(h, s, l) {
-            h /= 360;
-            s /= 100;
-            l /= 100;
-            let r, g, b;
-            if (s === 0) {
-                r = g = b = l;
-            } else {
-                const hue2rgb = (p, q, t) => {
-                    if (t < 0) t += 1;
-                    if (t > 1) t -= 1;
-                    if (t < 1/6) return p + (q - p) * 6 * t;
-                    if (t < 1/2) return q;
-                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-                    return p;
-                };
-                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-                const p = 2 * l - q;
-                r = hue2rgb(p, q, h + 1/3);
-                g = hue2rgb(p, q, h);
-                b = hue2rgb(p, q, h - 1/3);
-            }
-            const toHex = x => {
-                const hex = Math.round(x * 255).toString(16);
-                return hex.length === 1 ? '0' + hex : hex;
-            };
-            return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-        }
-        
-        // HEX转HSL
-        function hexToHsl(hex) {
-            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-            let r = parseInt(result[1], 16) / 255;
-            let g = parseInt(result[2], 16) / 255;
-            let b = parseInt(result[3], 16) / 255;
-            const max = Math.max(r, g, b);
-            const min = Math.min(r, g, b);
-            let h, s, l = (max + min) / 2;
-            if (max === min) {
-                h = s = 0;
-            } else {
-                const d = max - min;
-                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-                switch (max) {
-                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-                    case g: h = (b - r) / d + 2; break;
-                    case b: h = (r - g) / d + 4; break;
-                }
-                h /= 6;
-            }
-            return {
-                h: h * 360,
-                s: s * 100,
-                l: l * 100
-            };
-        }
-        
-        // 生成渐变CSS字符串
-        function generateGradientCSS(stops, direction = '135deg') {
-            const gradient = stops.map(stop => {
-                const hsl = hexToHsl(stop.color);
-                const adjustedColor = hslToHex(hsl.h, hsl.s, stop.brightness);
-                return `${adjustedColor} ${stop.position}%`;
-            }).join(', ');
-            return `linear-gradient(${direction}, ${gradient})`;
-        }
-        
-        // 生成Canvas渐变对象
-        function generateCanvasGradient(ctx, width, height, stops, direction = '135deg') {
-            let gradient;
-            if (direction === '135deg') {
-                gradient = ctx.createLinearGradient(0, 0, width, height);
-            } else if (direction === '90deg') {
-                gradient = ctx.createLinearGradient(0, 0, width, 0);
-            } else {
-                gradient = ctx.createLinearGradient(0, 0, width, height);
-            }
+        // 切换步骤
+        function goToStep(step) {
+            // 更新步骤指示器
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.querySelector(`.step[data-step="${step}"]`).classList.add('active');
             
-            stops.forEach(stop => {
-                const hsl = hexToHsl(stop.color);
-                const adjustedColor = hslToHex(hsl.h, hsl.s, stop.brightness);
-                gradient.addColorStop(stop.position / 100, adjustedColor);
-            });
-            return gradient;
+            // 更新步骤内容
+            document.querySelectorAll('.step-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(step).classList.add('active');
+            
+            currentStep = step;
+            
+            // 初始化对应步骤的功能
+            if (step === 'creation') {
+                initDrawing();
+                initWriting();
+            }
         }
         
-        // =======================
-        // 预览和提交
-        // =======================
+        // 切换创造类型
+        function switchCreationType(type) {
+            // 更新标签
+            document.querySelectorAll('.creation-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelector(`.creation-tab[data-creation-type="${type}"]`).classList.add('active');
+            
+            // 更新内容
+            document.querySelectorAll('.creation-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(`${type}-content`).classList.add('active');
+            
+            creationType = type;
+        }
         
         // 生成预览
         function generatePreview() {
@@ -1565,7 +1515,12 @@ require_once __DIR__ . '/app/includes/footer.php';
 
                 // 1. 绘制背景渐变
                 // 从 gradientStops 重新创建渐变，因为 Canvas API 不支持直接使用 CSS 渐变字符串
-                const gradient = generateCanvasGradient(offCtx, offscreen.width, offscreen.height, gradientStops, '135deg');
+                const gradient = offCtx.createLinearGradient(0, 0, offscreen.width, offscreen.height);
+                gradientStops.forEach(stop => {
+                    const hsl = hexToHsl(stop.color);
+                    const adjustedColor = hslToHex(hsl.h, hsl.s, stop.brightness);
+                    gradient.addColorStop(stop.position / 100, adjustedColor);
+                });
                 offCtx.fillStyle = gradient;
                 offCtx.fillRect(0, 0, offscreen.width, offscreen.height);
 
@@ -1600,7 +1555,12 @@ require_once __DIR__ . '/app/includes/footer.php';
                 
                 if (useGradient) {
                     // 渐变文字效果（从左上到右下）
-                    textPreview.style.background = generateGradientCSS(gradientStops, '135deg');
+                    const gradient = gradientStops.map(stop => {
+                        const hsl = hexToHsl(stop.color);
+                        const adjustedColor = hslToHex(hsl.h, hsl.s, stop.brightness);
+                        return `${adjustedColor} ${stop.position}%`;
+                    }).join(', ');
+                    textPreview.style.background = `linear-gradient(135deg, ${gradient})`;
                     textPreview.style.webkitBackgroundClip = 'text';
                     textPreview.style.webkitTextFillColor = 'transparent';
                     textPreview.style.backgroundClip = 'text';
