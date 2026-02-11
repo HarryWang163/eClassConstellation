@@ -18,85 +18,10 @@ require_once __DIR__ . '/app/includes/header.php';
             <p class="subtitle">我们的记忆交互轴线</p>
         </header>
         
-        <div class="timeline-container">
-            <div class="timeline">
-                <!-- 军训时期 -->
-                <div class="timeline-item left">
-                    <div class="timeline-content">
-                        <div class="timeline-date">2024年8月</div>
-                        <div class="timeline-title">军训时光</div>
-                        <div class="timeline-description">我们的第一次集体生活，顶着烈日训练，一起唱军歌，建立了最初的友谊。那些汗水与笑声，是我们青春的开始。</div>
-                        <img class="timeline-image" src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=high%20school%20military%20training%20group%20photo%20students%20in%20uniform%20smiling%20outdoor&image_size=landscape_16_9" alt="军训合影">
-                        <div class="interaction-buttons">
-                            <button class="btn btn-like">👍 点赞 (24)</button>
-                            <button class="btn btn-comment">💬 留言</button>
-                            <button class="btn btn-tag">@ 某人</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 第一次班会 -->
-                <div class="timeline-item right">
-                    <div class="timeline-content">
-                        <div class="timeline-date">2024年9月</div>
-                        <div class="timeline-title">第一次班会</div>
-                        <div class="timeline-description">班主任林老师主持的第一次班会，我们各自做了自我介绍，选出了班委。那一刻，我们正式成为了一个集体。</div>
-                        <img class="timeline-image" src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=high%20school%20class%20meeting%20students%20sitting%20in%20classroom%20teacher%20speaking%20warm%20atmosphere&image_size=landscape_16_9" alt="第一次班会">
-                        <div class="interaction-buttons">
-                            <button class="btn btn-like">👍 点赞 (18)</button>
-                            <button class="btn btn-comment">💬 留言</button>
-                            <button class="btn btn-tag">@ 某人</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 运动会 -->
-                <div class="timeline-item left">
-                    <div class="timeline-content">
-                        <div class="timeline-date">2024年10月</div>
-                        <div class="timeline-title">秋季运动会</div>
-                        <div class="timeline-description">我们在运动会上奋力拼搏，为班级荣誉而战，留下了许多精彩瞬间。那些加油声、呐喊声，至今仍在耳边回响。</div>
-                        <img class="timeline-image" src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=high%20school%20sports%20day%20students%20participating%20in%20race%20cheering%20excitement&image_size=landscape_16_9" alt="运动会">
-                        <div class="interaction-buttons">
-                            <button class="btn btn-like">👍 点赞 (32)</button>
-                            <button class="btn btn-comment">💬 留言</button>
-                            <button class="btn btn-tag">@ 某人</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 元旦晚会 -->
-                <div class="timeline-item right">
-                    <div class="timeline-content">
-                        <div class="timeline-date">2025年1月</div>
-                        <div class="timeline-title">元旦晚会</div>
-                        <div class="timeline-description">我们自编自演的节目，笑声不断，一起迎接新年的到来。那一刻，我们的心紧紧相连。</div>
-                        <img class="timeline-image" src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=high%20school%20new%20year%20party%20students%20performing%20on%20stage%20colorful%20decorations&image_size=landscape_16_9" alt="元旦晚会">
-                        <div class="interaction-buttons">
-                            <button class="btn btn-like">👍 点赞 (28)</button>
-                            <button class="btn btn-comment">💬 留言</button>
-                            <button class="btn btn-tag">@ 某人</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 班级值周 -->
-                <div class="timeline-item left">
-                    <div class="timeline-content">
-                        <div class="timeline-date">2025年3月</div>
-                        <div class="timeline-title">第一次值周</div>
-                        <div class="timeline-description">我们班第一次值周，主题是"创新驱动智慧 艺术引领文化"，大家都很认真负责。我们用行动证明了11班的凝聚力。</div>
-                        <img class="timeline-image" src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=high%20school%20students%20on%20duty%20wearing%20armbands%20cleaning%20campus%20responsible&image_size=landscape_16_9" alt="值周">
-                        <div class="interaction-buttons">
-                            <button class="btn btn-like">👍 点赞 (21)</button>
-                            <button class="btn btn-comment">💬 留言</button>
-                            <button class="btn btn-tag">@ 某人</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+        <main>
+            <p class="subtitle">欢迎来到“时光同轨”！在这里，我们将共同回顾和分享那些珍贵的瞬间。每一条时间线都承载着我们的故事和回忆，邀请你一同参与，点赞、留言，甚至@你的好友，让我们的记忆更加丰富多彩。</p>
+            <p class="subtitle">开发中...</p>
+        </main >
 <?php
 // 引入公共页脚
 require_once __DIR__ . '/app/includes/footer.php';

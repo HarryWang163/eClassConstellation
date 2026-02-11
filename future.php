@@ -1,11 +1,11 @@
 <?php
 // 引入认证工具
-// require_once __DIR__ . '/app/includes/auth.php';
+require_once __DIR__ . '/app/includes/auth.php';
 
 // 检查是否已登录
-// if (!isLoggedIn()) {
-//     redirectToLogin();
-// }
+if (!isLoggedIn()) {
+    redirectToLogin();
+}
 ?>
 
 <?php
@@ -16,6 +16,7 @@ require_once __DIR__ . '/app/includes/header.php';
         <header>
             <h1>星屿共筑</h1>
             <p class="subtitle">我们的未来星空</p>
+            <p class="subtitle">本项目开发中@zsq 此处展示简单demo🫡</p>
         </header>
         
         <div class="future-container">
