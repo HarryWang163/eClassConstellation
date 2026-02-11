@@ -1,6 +1,6 @@
 <?php
 // 引入认证工具
-require_once __DIR__ . '/../app/includes/auth.php';
+require_once __DIR__ . '/app/includes/auth.php';
 
 // 检查是否已登录
 if (!isLoggedIn()) {
@@ -10,7 +10,7 @@ if (!isLoggedIn()) {
 
 <?php
 // 引入公共头部
-require_once __DIR__ . '/../app/includes/header.php';
+require_once __DIR__ . '/app/includes/header.php';
 ?>
 
         <header>
@@ -95,7 +95,7 @@ require_once __DIR__ . '/../app/includes/header.php';
 
 <?php
 // 引入公共页脚
-require_once __DIR__ . '/../app/includes/footer.php';
+require_once __DIR__ . '/app/includes/footer.php';
 ?>
 
 <style>

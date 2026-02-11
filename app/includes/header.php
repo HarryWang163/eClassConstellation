@@ -336,7 +336,7 @@
         <div class="nav-bar">
             <a href="/index.php" class="nav-brand">同在计划</a>
             <div class="nav-links">
-                <a href="/index.php" class="nav-link">首页</a>
+                <a href="/dashboard.php" class="nav-link">首页</a>
                 <a href="/password.php" class="nav-link">同在密码</a>
                 <a href="/timeline.php" class="nav-link">时光同轨</a>
                 <a href="/stars.php" class="nav-link">星光互映</a>

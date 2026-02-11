@@ -9,13 +9,13 @@ function isLoggedIn() {
 
 // 重定向到登录页面
 function redirectToLogin() {
-    header('Location: /public/login.php');
+    header('Location: /login.php');
     exit;
 }
 
 // 验证用户登录
 function authenticate($username, $password) {
-    require_once __DIR__ . '/../config/database.php';
+    require_once __DIR__ . '/config/database.php';
     
     try {
         $db = getDB();

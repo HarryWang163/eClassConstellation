@@ -1,3 +1,58 @@
+<?php
+// 启动Session
+session_start();
+
+// 引入配置文件
+require_once __DIR__ . '/app/config/database.php';
+
+// 处理登录请求
+$showForm = true; // 控制是否显示表单
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = trim($_POST['username']);
+    $password = trim($_POST['password']);
+    
+    if (empty($username) || empty($password)) {
+        $error = '用户名和密码不能为空';
+    } else {
+        try {
+            $db = getDB();
+            $stmt = $db->prepare('SELECT id, username, password FROM users WHERE username = ?');
+            $stmt->execute([$username]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($user) {
+                // 检查用户是否存在
+                if ($password == $user['password']) {
+                    // 登录成功，存储用户信息到Session
+                    $_SESSION['user_id'] = $user['id'];
+                    $_SESSION['username'] = $user['username'];
+                    
+                    // 输出HTML和JavaScript进行重定向
+                    echo '<!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>重定向中...</title>
+                        <script>
+                            window.location.href = "dashboard.php";
+                        </script>
+                    </head>
+                    <body>
+                        <p>如果页面没有自动跳转，请<a href="dashboard.php">点击这里</a>。</p>
+                    </body>
+                    </html>';
+                    exit();
+                } else {
+                    $error = '密码错误';
+                }
+            } else {
+                $error = '用户名不存在';
+            }
+        } catch (Exception $e) {
+            $error = '数据库连接错误: ' . $e->getMessage();
+        }
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -237,55 +292,6 @@
             <h1 class="login-title">同在计划</h1>
             <p class="login-subtitle">请登录以继续</p>
         </div>
-        
-        <?php
-        // 启动Session
-        session_start();
-        
-        // 引入配置文件
-        require_once __DIR__ . '/../app/config/database.php';
-        
-        // 处理登录请求
-        $error = '';
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $username = trim($_POST['username']);
-            $password = trim($_POST['password']);
-            
-            if (empty($username) || empty($password)) {
-                $error = '用户名和密码不能为空';
-            } else {
-                try {
-                    $db = getDB();
-                    $stmt = $db->prepare('SELECT id, username, password FROM users WHERE username = ?');
-                    $stmt->execute([$username]);
-                    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-                    
-                    if ($user) {
-                        // 检查用户是否存在
-                        if ($password == $user['password']) {
-                            // 登录成功，存储用户信息到Session
-                            $_SESSION['user_id'] = $user['id'];
-                            $_SESSION['username'] = $user['username'];
-                            // 重定向到首页
-                            header('Location: /public/index.php');
-                            exit;
-                        } else {
-                            $error = '密码错误';
-                        }
-                    } else {
-                        $error = '用户名不存在';
-                    }
-                } catch (Exception $e) {
-                    $error = '数据库连接错误: ' . $e->getMessage();
-                }
-            }
-        }
-        
-        // 显示错误信息
-        if (!empty($error)) {
-            echo '<div class="error-message">' . htmlspecialchars($error) . '</div>';
-        }
-        ?>
         
         <form class="login-form" method="POST" action="">
             <div class="form-group">
