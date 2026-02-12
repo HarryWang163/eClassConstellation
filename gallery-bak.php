@@ -73,13 +73,10 @@ $images = getImages();
 require_once __DIR__ . '/app/includes/header.php';
 ?>
 
-        <!-- 全局星光背景 -->
-        <div class="global-star-background" id="global-star-background"></div>
-        
         <div class="gallery-container">
             <div class="gallery-content" id="gallery-content">
                 <!-- 重要图片（置于页面正中央） -->
-                <div class="important-image-container" id="important-image-container">
+                <div class="important-image-container" id="important-image-container" style="position: fixed;">
                     <img src="<?php echo $images[0]['url']; ?>" alt="主要图片" class="important-image" id="important-image">
                 </div>
                 
@@ -121,14 +118,14 @@ require_once __DIR__ . '/app/includes/header.php';
         
         /* 重要图片容器（置于页面正中央） */
         .important-image-container {
-            position: fixed;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             z-index: 100;
             display: flex;
             justify-content: center;
             align-items: center;
-            max-width: 90vw;
-            max-height: 90vh;
-            will-change: transform, width, height;
         }
         
         /* 旋转光环效果 */
@@ -153,7 +150,6 @@ require_once __DIR__ . '/app/includes/header.php';
             opacity: 0.7;
             filter: blur(1px);
             box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
-            will-change: transform;
         }
         
         /* 第二个光环，反向旋转，增加层次感 */
@@ -166,17 +162,12 @@ require_once __DIR__ . '/app/includes/header.php';
             border-radius: 50%;
             animation: rotateReverse 12s linear infinite;
             opacity: 0.5;
-            will-change: transform;
         }
         
         /* 调整图片层级，不被伪元素遮挡 */
         .important-image {
             position: relative;
             z-index: 3;
-            width: 100%;
-            height: 100%;
-            border-radius: 10px;
-            object-fit: cover;
         }
         
         /* 其他图片容器的旋转光环效果 */
@@ -185,8 +176,6 @@ require_once __DIR__ . '/app/includes/header.php';
             display: flex;
             justify-content: center;
             align-items: center;
-            opacity: 0;
-            will-change: opacity, transform;
         }
         
         /* 其他图片的光环伪元素 */
@@ -203,7 +192,6 @@ require_once __DIR__ . '/app/includes/header.php';
             opacity: 0.7;
             filter: blur(1px);
             box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
-            will-change: transform;
         }
         
         /* 其他图片的第二个光环 */
@@ -216,18 +204,12 @@ require_once __DIR__ . '/app/includes/header.php';
             border-radius: 50%;
             animation: rotateReverse 12s linear infinite;
             opacity: 0.5;
-            will-change: transform;
         }
         
         /* 调整其他图片层级 */
         .other-image {
             position: relative;
             z-index: 3;
-            width: 150px;
-            height: 150px;
-            border-radius: 10px;
-            transition: transform 0.3s ease;
-            will-change: transform;
         }
         
         /* 旋转动画 */
@@ -272,7 +254,6 @@ require_once __DIR__ . '/app/includes/header.php';
             transform: translate(-50%, -50%);
             pointer-events: none;
             animation: rotateField 20s linear infinite;
-            will-change: transform;
         }
         
         .star-particle {
@@ -281,47 +262,6 @@ require_once __DIR__ . '/app/includes/header.php';
             border-radius: 50%;
             box-shadow: 0 0 10px gold;
             animation: twinkle 2s infinite alternate;
-            will-change: opacity, transform;
-        }
-        
-        /* 全局星光背景 */
-        .global-star-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: -1;
-            overflow: hidden;
-        }
-        
-        .global-star {
-            position: absolute;
-            background: white;
-            border-radius: 50%;
-            box-shadow: 0 0 5px gold;
-            will-change: opacity, transform;
-        }
-        
-        /* 不同大小的星星动画 */
-        .global-star.small {
-            width: 1px;
-            height: 1px;
-            animation: twinkle 3s infinite alternate;
-        }
-        
-        .global-star.medium {
-            width: 2px;
-            height: 2px;
-            animation: twinkle 4s infinite alternate;
-        }
-        
-        .global-star.large {
-            width: 3px;
-            height: 3px;
-            animation: twinkle 2s infinite alternate;
-            box-shadow: 0 0 8px gold;
         }
         
         @keyframes rotateField {
@@ -349,19 +289,17 @@ require_once __DIR__ . '/app/includes/header.php';
             }
         }
         
-        /* 响应式设计 */
-        @media (max-width: 768px) {
-            .important-image {
-                max-width: 85vw;
-                max-height: 85vh;
-            }
+        .important-image {
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+            object-fit: cover;
         }
         
-        @media (max-width: 480px) {
-            .important-image {
-                max-width: 80vw;
-                max-height: 80vh;
-            }
+        .important-image-container {
+            max-width: 90vw;
+            max-height: 90vh;
+            transition: all 2s ease;
         }
         
         /* 其他图片容器 */
@@ -380,11 +318,34 @@ require_once __DIR__ . '/app/includes/header.php';
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 50;
+            opacity: 0;
+        }
+        
+        .other-image {
+            width: 150px;
+            height: 150px;
+            border-radius: 10px;
+            transition: transform 0.3s ease;
         }
         
         .other-image:hover {
             transform: scale(1.2);
             cursor: pointer;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .important-image {
+                max-width: 85vw;
+                max-height: 85vh;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .important-image {
+                max-width: 80vw;
+                max-height: 80vh;
+            }
         }
     </style>
     
@@ -462,6 +423,8 @@ require_once __DIR__ . '/app/includes/header.php';
                 return { x, y };
             }
 
+            
+            
             // 初始化图片位置（确保不重叠）
             function initializeImagePositions() {
                 // 重置已使用的位置
@@ -485,15 +448,7 @@ require_once __DIR__ . '/app/includes/header.php';
 
             // 缓动函数
             function easeOutCubic(t) {
-                return 1 - Math.pow(1 - t, 1);
-            }
-            
-            function easeInOutCubic(t) {
-                return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-            }
-            
-            function easeOutQuart(t) {
-                return 1 - Math.pow(1 - t, 4);
+                return 1 - Math.pow(1 - t, 3);
             }
 
             // 启动透明度渐变动画
@@ -507,12 +462,12 @@ require_once __DIR__ . '/app/includes/header.php';
                 // 动画结束后，允许交互
                 setTimeout(() => {
                     galleryContent.style.pointerEvents = 'auto';
-                }, 3500);
+                }, 5000);
             }
             
             // 使用requestAnimationFrame实现其他图片的透明度变化动画
             function animateOtherImagesOpacity() {
-                const duration = 3000; // 动画持续时间（毫秒）
+                const duration = 5000; // 动画持续时间（毫秒）
                 const startTime = performance.now();
                 
                 // 获取所有其他图片的容器
@@ -543,7 +498,7 @@ require_once __DIR__ . '/app/includes/header.php';
             
             // 使用requestAnimationFrame重新实现主要图片的缩放动画
             function animateImportantImageShrink() {
-                const duration = 3000; // 动画持续时间（毫秒）
+                const duration = 5000; // 动画持续时间（毫秒）
                 const startTime = performance.now();
                 
                 // 获取初始尺寸和位置（从容器获取）
@@ -586,7 +541,7 @@ require_once __DIR__ . '/app/includes/header.php';
                         requestAnimationFrame(animate);
                     }
                 }
-                
+                                
                 // 开始动画
                 requestAnimationFrame(animate);
             }
@@ -616,18 +571,18 @@ require_once __DIR__ . '/app/includes/header.php';
             setTimeout(animateImages, 500);
         });
         
-        // 为图片添加星光粒子效果（减少粒子数量）
+        // 为图片添加星光粒子效果
         function addStarField() {
             const importantImageContainer = document.getElementById('important-image-container');
             const otherImageWrappers = document.querySelectorAll('.other-image-wrapper');
             
-            // 为重要图片容器添加星光粒子（减少到12个）
+            // 为重要图片容器添加星光粒子
             if (importantImageContainer) {
                 const field = document.createElement('div');
                 field.className = 'star-field';
                 
-                // 生成12个粒子
-                for (let i = 0; i < 12; i++) {
+                // 生成20个粒子
+                for (let i = 0; i < 20; i++) {
                     const star = document.createElement('div');
                     star.className = 'star-particle';
                     const size = Math.random() * 4 + 2;
@@ -642,13 +597,13 @@ require_once __DIR__ . '/app/includes/header.php';
                 importantImageContainer.appendChild(field);
             }
             
-            // 为其他图片容器添加星光粒子（减少到8个）
+            // 为其他图片容器添加星光粒子
             otherImageWrappers.forEach(wrapper => {
                 const field = document.createElement('div');
                 field.className = 'star-field';
                 
-                // 生成8个粒子
-                for (let i = 0; i < 8; i++) {
+                // 生成15个粒子（其他图片稍少一些）
+                for (let i = 0; i < 15; i++) {
                     const star = document.createElement('div');
                     star.className = 'star-particle';
                     const size = Math.random() * 3 + 1.5;
@@ -664,33 +619,5 @@ require_once __DIR__ . '/app/includes/header.php';
             });
         }
         
-        // 添加全局星光背景
-        function addGlobalStarBackground() {
-            const container = document.getElementById('global-star-background');
-            const starCount = 100; // 星星数量
-            
-            for (let i = 0; i < starCount; i++) {
-                const star = document.createElement('div');
-                star.className = 'global-star';
-                
-                // 随机大小
-                const sizeClass = Math.random() > 0.7 ? 'large' : (Math.random() > 0.5 ? 'medium' : 'small');
-                star.classList.add(sizeClass);
-                
-                // 随机位置
-                star.style.left = Math.random() * 100 + '%';
-                star.style.top = Math.random() * 100 + '%';
-                
-                // 随机透明度
-                star.style.opacity = Math.random() * 0.8 + 0.2;
-                
-                // 随机动画延迟
-                star.style.animationDelay = Math.random() * 5 + 's';
-                
-                container.appendChild(star);
-            }
-        }
-        
         window.addEventListener('load', addStarField);
-        window.addEventListener('load', addGlobalStarBackground);
     </script>

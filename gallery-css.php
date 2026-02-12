@@ -73,9 +73,6 @@ $images = getImages();
 require_once __DIR__ . '/app/includes/header.php';
 ?>
 
-        <!-- 全局星光背景 -->
-        <div class="global-star-background" id="global-star-background"></div>
-        
         <div class="gallery-container">
             <div class="gallery-content" id="gallery-content">
                 <!-- 重要图片（置于页面正中央） -->
@@ -121,13 +118,17 @@ require_once __DIR__ . '/app/includes/header.php';
         
         /* 重要图片容器（置于页面正中央） */
         .important-image-container {
-            position: fixed;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             z-index: 100;
             display: flex;
             justify-content: center;
             align-items: center;
             max-width: 90vw;
             max-height: 90vh;
+            animation: importantImageShrink 3s linear forwards;
             will-change: transform, width, height;
         }
         
@@ -186,8 +187,21 @@ require_once __DIR__ . '/app/includes/header.php';
             justify-content: center;
             align-items: center;
             opacity: 0;
+            animation: otherImageFadeIn 3s linear forwards;
             will-change: opacity, transform;
         }
+        
+        /* 为每个其他图片添加不同的动画延迟 */
+        .other-image-wrapper:nth-child(1) { animation-delay: 0.2s; }
+        .other-image-wrapper:nth-child(2) { animation-delay: 0.4s; }
+        .other-image-wrapper:nth-child(3) { animation-delay: 0.6s; }
+        .other-image-wrapper:nth-child(4) { animation-delay: 0.8s; }
+        .other-image-wrapper:nth-child(5) { animation-delay: 1s; }
+        .other-image-wrapper:nth-child(6) { animation-delay: 1.2s; }
+        .other-image-wrapper:nth-child(7) { animation-delay: 1.4s; }
+        .other-image-wrapper:nth-child(8) { animation-delay: 1.6s; }
+        .other-image-wrapper:nth-child(9) { animation-delay: 1.8s; }
+        .other-image-wrapper:nth-child(10) { animation-delay: 2s; }
         
         /* 其他图片的光环伪元素 */
         .other-image-wrapper::before {
@@ -241,6 +255,28 @@ require_once __DIR__ . '/app/includes/header.php';
             100% { transform: rotate(-360deg); }
         }
         
+        /* 重要图片缩小动画 */
+        @keyframes importantImageShrink {
+            0% { 
+                width: 90vw;
+                height: 90vh;
+            }
+            100% { 
+                width: 150px;
+                height: 150px;
+            }
+        }
+        
+        /* 其他图片淡入动画 */
+        @keyframes otherImageFadeIn {
+            0% { 
+                opacity: 0;
+            }
+            100% { 
+                opacity: 1;
+            }
+        }
+        
         /* 悬停时光环高亮并加速 */
         .important-image-container:hover::before,
         .other-image-wrapper:hover::before {
@@ -284,46 +320,6 @@ require_once __DIR__ . '/app/includes/header.php';
             will-change: opacity, transform;
         }
         
-        /* 全局星光背景 */
-        .global-star-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: -1;
-            overflow: hidden;
-        }
-        
-        .global-star {
-            position: absolute;
-            background: white;
-            border-radius: 50%;
-            box-shadow: 0 0 5px gold;
-            will-change: opacity, transform;
-        }
-        
-        /* 不同大小的星星动画 */
-        .global-star.small {
-            width: 1px;
-            height: 1px;
-            animation: twinkle 3s infinite alternate;
-        }
-        
-        .global-star.medium {
-            width: 2px;
-            height: 2px;
-            animation: twinkle 4s infinite alternate;
-        }
-        
-        .global-star.large {
-            width: 3px;
-            height: 3px;
-            animation: twinkle 2s infinite alternate;
-            box-shadow: 0 0 8px gold;
-        }
-        
         @keyframes rotateField {
             from { transform: translate(-50%, -50%) rotate(0deg); }
             to { transform: translate(-50%, -50%) rotate(360deg); }
@@ -340,12 +336,52 @@ require_once __DIR__ . '/app/includes/header.php';
                 width: 150px;
                 height: 150px;
             }
+            
+            .important-image-container {
+                animation: importantImageShrinkMobile 3s linear forwards;
+            }
+            
+            .other-image {
+                width: 120px;
+                height: 120px;
+            }
+            
+            @keyframes importantImageShrinkMobile {
+                0% { 
+                    width: 85vw;
+                    height: 85vh;
+                }
+                100% { 
+                    width: 120px;
+                    height: 120px;
+                }
+            }
         }
         
         @media (max-width: 480px) {
             .star-field {
                 width: 120px;
                 height: 120px;
+            }
+            
+            .important-image-container {
+                animation: importantImageShrinkSmallMobile 3s linear forwards;
+            }
+            
+            .other-image {
+                width: 100px;
+                height: 100px;
+            }
+            
+            @keyframes importantImageShrinkSmallMobile {
+                0% { 
+                    width: 80vw;
+                    height: 80vh;
+                }
+                100% { 
+                    width: 100px;
+                    height: 100px;
+                }
             }
         }
         
@@ -394,7 +430,6 @@ require_once __DIR__ . '/app/includes/header.php';
             // 获取所有其他图片
             const otherImages = document.querySelectorAll('.other-image');
             const galleryContent = document.getElementById('gallery-content');
-            const importantImage = document.getElementById('important-image');
             const importantImageContainer = document.getElementById('important-image-container');
             
             // 已使用的位置，用于碰撞检测
@@ -477,143 +512,23 @@ require_once __DIR__ . '/app/includes/header.php';
                     wrapper.style.left = `${position.x - imageSize / 2}px`;
                     wrapper.style.top = `${position.y - imageSize / 2}px`;
                     wrapper.style.transform = 'none';
-                    
-                    // 初始透明度为0
-                    wrapper.style.opacity = '0';
                 });
             }
-
-            // 缓动函数
-            function easeOutCubic(t) {
-                return 1 - Math.pow(1 - t, 1);
-            }
-            
-            function easeInOutCubic(t) {
-                return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-            }
-            
-            function easeOutQuart(t) {
-                return 1 - Math.pow(1 - t, 4);
-            }
-
-            // 启动透明度渐变动画
-            function animateImages() {
-                // 为重要图片添加缩小动画
-                animateImportantImageShrink();
-                
-                // 为其他图片启动透明度渐变动画
-                animateOtherImagesOpacity();
-                
-                // 动画结束后，允许交互
-                setTimeout(() => {
-                    galleryContent.style.pointerEvents = 'auto';
-                }, 3500);
-            }
-            
-            // 使用requestAnimationFrame实现其他图片的透明度变化动画
-            function animateOtherImagesOpacity() {
-                const duration = 3000; // 动画持续时间（毫秒）
-                const startTime = performance.now();
-                
-                // 获取所有其他图片的容器
-                const otherImageWrappers = document.querySelectorAll('.other-image-wrapper');
-                
-                // 动画函数
-                function animate(currentTime) {
-                    const elapsed = currentTime - startTime;
-                    const progress = Math.min(elapsed / duration, 1);
-                    
-                    // 使用缓动函数使动画更自然
-                    const easeProgress = easeOutCubic(progress);
-                    
-                    // 应用当前透明度到所有其他图片容器
-                    otherImageWrappers.forEach(wrapper => {
-                        wrapper.style.opacity = easeProgress;
-                    });
-                    
-                    // 如果动画未完成，继续下一帧
-                    if (progress < 1) {
-                        requestAnimationFrame(animate);
-                    }
-                }
-
-                // 开始动画
-                requestAnimationFrame(animate);
-            }
-            
-            // 使用requestAnimationFrame重新实现主要图片的缩放动画
-            function animateImportantImageShrink() {
-                const duration = 3000; // 动画持续时间（毫秒）
-                const startTime = performance.now();
-                
-                // 获取初始尺寸和位置（从容器获取）
-                const initialWidth = importantImageContainer.offsetWidth;
-                const initialHeight = importantImageContainer.offsetHeight;
-                
-                // 计算目标尺寸（根据屏幕尺寸调整）
-                let targetWidth, targetHeight;
-                if (window.innerWidth <= 768) {
-                    targetWidth = 120;
-                    targetHeight = 120;
-                } else if (window.innerWidth <= 480) {
-                    targetWidth = 100;
-                    targetHeight = 100;
-                } else {
-                    targetWidth = 150;
-                    targetHeight = 150;
-                }
-                
-                // 动画函数
-                function animate(currentTime) {
-                    const elapsed = currentTime - startTime;
-                    const progress = Math.min(elapsed / duration, 1);
-                    
-                    // 使用缓动函数使动画更自然
-                    const easeProgress = easeOutCubic(progress);
-                    
-                    // 计算当前尺寸
-                    const currentWidth = initialWidth + (targetWidth - initialWidth) * easeProgress;
-                    const currentHeight = initialHeight + (targetHeight - initialHeight) * easeProgress;
-                    
-                    // 应用当前尺寸到容器
-                    importantImageContainer.style.width = `${currentWidth}px`;
-                    importantImageContainer.style.height = `${currentHeight}px`;
-                    importantImageContainer.style.maxWidth = `${currentWidth}px`;
-                    importantImageContainer.style.maxHeight = `${currentHeight}px`;
-                    
-                    // 如果动画未完成，继续下一帧
-                    if (progress < 1) {
-                        requestAnimationFrame(animate);
-                    }
-                }
-                
-                // 开始动画
-                requestAnimationFrame(animate);
-            }
-            
-            // 为其他图片添加悬停效果
-            otherImages.forEach(image => {
-                image.addEventListener('mouseenter', function() {
-                    this.style.transform = 'scale(1.2)';
-                });
-                
-                image.addEventListener('mouseleave', function() {
-                    this.style.transform = 'scale(1)';
-                });
-            });
             
             // 初始化
             adjustImageSize();
             initializeImagePositions();
+            
+            // 动画结束后，允许交互
+            setTimeout(() => {
+                galleryContent.style.pointerEvents = 'auto';
+            }, 3500);
             
             // 窗口大小改变时重新调整
             window.addEventListener('resize', function() {
                 adjustImageSize();
                 initializeImagePositions();
             });
-            
-            // 页面加载完成后启动动画
-            setTimeout(animateImages, 500);
         });
         
         // 为图片添加星光粒子效果（减少粒子数量）
@@ -664,33 +579,5 @@ require_once __DIR__ . '/app/includes/header.php';
             });
         }
         
-        // 添加全局星光背景
-        function addGlobalStarBackground() {
-            const container = document.getElementById('global-star-background');
-            const starCount = 100; // 星星数量
-            
-            for (let i = 0; i < starCount; i++) {
-                const star = document.createElement('div');
-                star.className = 'global-star';
-                
-                // 随机大小
-                const sizeClass = Math.random() > 0.7 ? 'large' : (Math.random() > 0.5 ? 'medium' : 'small');
-                star.classList.add(sizeClass);
-                
-                // 随机位置
-                star.style.left = Math.random() * 100 + '%';
-                star.style.top = Math.random() * 100 + '%';
-                
-                // 随机透明度
-                star.style.opacity = Math.random() * 0.8 + 0.2;
-                
-                // 随机动画延迟
-                star.style.animationDelay = Math.random() * 5 + 's';
-                
-                container.appendChild(star);
-            }
-        }
-        
         window.addEventListener('load', addStarField);
-        window.addEventListener('load', addGlobalStarBackground);
     </script>
