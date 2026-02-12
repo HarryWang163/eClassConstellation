@@ -631,14 +631,6 @@ require_once __DIR__ . '/app/includes/header.php';
                 font-size: 16px !important;
             }
         }
-        
-        /* 图片容器高度适配 */
-        @media (max-width: 768px) {
-            #gallery-content {
-                min-height: 80vh;
-                position: relative;
-            }
-        }
     </style>
     
     <script>
@@ -671,70 +663,62 @@ require_once __DIR__ . '/app/includes/header.php';
                 });
             }
             
-            // 计算目标位置
+            // 计算目标位置（以重要图片为圆心向外扩散，避免重叠）
             function getRandomPosition() {
                 const containerWidth = galleryContent.offsetWidth;
                 const containerHeight = galleryContent.offsetHeight;
                 
-                let x, y;
+                // 以重要图片为中心
+                const centerX = containerWidth / 2;
+                const centerY = containerHeight / 2;
                 
-                // 移动端使用网格布局（每行2个）
+                // 根据屏幕尺寸调整参数
+                let minRadius, maxRadius, minDistance;
                 if (window.innerWidth <= 768) {
-                    const index = usedPositions.length;
-                    const cols = 2; // 每行2个
-                    const spacing = 10; // 间距
-                    
-                    // 计算行列位置
-                    const row = Math.floor(index / cols);
-                    const col = index % cols;
-                    
-                    // 计算位置（居中布局）
-                    const totalWidth = cols * imageSize + (cols - 1) * spacing;
-                    const startX = (containerWidth - totalWidth) / 2;
-                    
-                    x = startX + col * (imageSize + spacing) + imageSize / 2;
-                    y = 180 + row * (imageSize + spacing) + imageSize / 2; // 180px 为重要图片下方的距离
+                    // 移动端和平板
+                    minRadius = imageSize + 20; // 最小距离中心的半径
+                    maxRadius = Math.min(containerWidth, containerHeight) / 2 - imageSize - 10;
+                    minDistance = imageSize + 20; // 最小距离（图片宽度+间距）
                 } else {
-                    // 桌面端使用圆形分布
-                    const centerX = containerWidth / 2;
-                    const centerY = containerHeight / 2;
-                    const minRadius = 150; // 最小距离中心的半径
-                    const maxRadius = Math.min(containerWidth, containerHeight) / 2 - imageSize;
-                    const minDistance = imageSize + 50; // 最小距离（图片宽度+间距）
+                    // 桌面端
+                    minRadius = 150; // 最小距离中心的半径
+                    maxRadius = Math.min(containerWidth, containerHeight) / 2 - imageSize;
+                    minDistance = imageSize + 50; // 最小距离（图片宽度+间距）
+                }
+                
+                let x, y;
+                let attempts = 0;
+                const maxAttempts = 200; // 增加尝试次数以找到更好的位置
+                
+                do {
+                    // 生成以中心为原点的极坐标
+                    const radius = minRadius + Math.random() * (maxRadius - minRadius);
+                    const angle = Math.random() * Math.PI * 2;
                     
-                    let attempts = 0;
-                    const maxAttempts = 200; // 增加尝试次数以找到更好的位置
+                    // 转换为笛卡尔坐标
+                    x = centerX + Math.cos(angle) * radius;
+                    y = centerY + Math.sin(angle) * radius;
                     
-                    do {
-                        // 生成以中心为原点的极坐标
-                        const radius = minRadius + Math.random() * (maxRadius - minRadius);
-                        const angle = Math.random() * Math.PI * 2;
-                        
-                        // 转换为笛卡尔坐标
-                        x = centerX + Math.cos(angle) * radius;
-                        y = centerY + Math.sin(angle) * radius;
-                        
-                        // 确保位置在容器内
-                        x = Math.max(imageSize / 2, Math.min(containerWidth - imageSize / 2, x));
-                        y = Math.max(imageSize / 2, Math.min(containerHeight - imageSize / 2, y));
-                        
-                        // 检查是否与其他图片重叠
-                        let isOverlapping = false;
-                        for (const pos of usedPositions) {
-                            const distance = Math.sqrt(Math.pow(x - pos.x, 2) + Math.pow(y - pos.y, 2));
-                            if (distance < minDistance) {
-                                isOverlapping = true;
-                                break;
-                            }
-                        }
-                        
-                        attempts++;
-                        
-                        if (!isOverlapping || attempts >= maxAttempts) {
+                    // 确保位置在容器内
+                    x = Math.max(imageSize / 2, Math.min(containerWidth - imageSize / 2, x));
+                    y = Math.max(imageSize / 2, Math.min(containerHeight - imageSize / 2, y));
+                    
+                    // 检查是否与其他图片重叠
+                    let isOverlapping = false;
+                    for (const pos of usedPositions) {
+                        const distance = Math.sqrt(Math.pow(x - pos.x, 2) + Math.pow(y - pos.y, 2));
+                        if (distance < minDistance) {
+                            isOverlapping = true;
                             break;
                         }
-                    } while (true);
-                }
+                    }
+                    
+                    attempts++;
+                    
+                    if (!isOverlapping || attempts >= maxAttempts) {
+                        break;
+                    }
+                } while (true);
                 
                 // 记录使用的位置
                 usedPositions.push({ x, y });
