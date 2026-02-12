@@ -550,7 +550,6 @@ require_once __DIR__ . '/app/includes/footer.php';
             border-radius: 5px;
             background: rgba(255, 255, 255, 0.2);
             outline: none;
-            -webkit-appearance: none;
         }
         
         .input-with-slider input[type="range"]::-webkit-slider-thumb {
@@ -682,7 +681,6 @@ require_once __DIR__ . '/app/includes/footer.php';
             border-radius: 5px;
             background: rgba(255, 255, 255, 0.2);
             outline: none;
-            -webkit-appearance: none;
         }
         
         .drawing-controls input[type="range"]::-webkit-slider-thumb {
