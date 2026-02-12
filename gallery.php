@@ -418,26 +418,34 @@ require_once __DIR__ . '/app/includes/header.php';
                 });
             }
             
-            // 计算目标位置（随机分布在页面其余位置，避免重叠）
+            // 计算目标位置（以重要图片为圆心向外扩散，避免重叠）
             function getRandomPosition() {
                 const containerWidth = galleryContent.offsetWidth;
                 const containerHeight = galleryContent.offsetHeight;
                 
-                // 避开中央区域（重要图片的位置）
+                // 以重要图片为中心
                 const centerX = containerWidth / 2;
                 const centerY = containerHeight / 2;
-                const avoidRadius = 150; // 避开半径
-                const minDistance = imageSize + 30; // 最小距离（图片宽度+间距）
+                const minRadius = 150; // 最小距离中心的半径
+                const maxRadius = Math.min(containerWidth, containerHeight) / 2 - imageSize;
+                const minDistance = imageSize + 50; // 最小距离（图片宽度+间距）
                 
                 let x, y;
                 let attempts = 0;
-                const maxAttempts = 200; // 增加尝试次数以找到更好的位置
+                const maxAttempts = 50; // 增加尝试次数以找到更好的位置
                 
                 do {
-                    x = Math.random() * (containerWidth - imageSize) + imageSize / 2;
-                    y = Math.random() * (containerHeight - imageSize) + imageSize / 2;
+                    // 生成以中心为原点的极坐标
+                    const radius = minRadius + Math.random() * 2 * (maxRadius - minRadius);
+                    const angle = Math.random() * Math.PI * 2;
                     
-                    const distanceFromCenter = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+                    // 转换为笛卡尔坐标
+                    x = centerX + Math.cos(angle) * radius;
+                    y = centerY + Math.sin(angle) * radius;
+                    
+                    // 确保位置在容器内
+                    x = Math.max(imageSize / 2, Math.min(containerWidth - imageSize / 2, x));
+                    y = Math.max(imageSize / 2, Math.min(containerHeight - imageSize / 2, y));
                     
                     // 检查是否与其他图片重叠
                     let isOverlapping = false;
@@ -451,7 +459,7 @@ require_once __DIR__ . '/app/includes/header.php';
                     
                     attempts++;
                     
-                    if ((distanceFromCenter > avoidRadius && !isOverlapping) || attempts >= maxAttempts) {
+                    if (!isOverlapping || attempts >= maxAttempts) {
                         break;
                     }
                 } while (true);
