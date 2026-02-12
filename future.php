@@ -1762,37 +1762,16 @@ require_once __DIR__ . '/app/includes/footer.php';
                     alert('创作提交失败: ' + data.message);
                 }
                 
-                // 重置到第一步
-                resetCreationProcess();
+                redirectToGallery();
             })
             .catch(error => {
                 console.error('保存出错:', error);
-                alert('创作提交失败，请查看控制台了解详情。');
-                
-                // 重置到第一步
-                resetCreationProcess();
+                alert('创作提交失败，请刷新页面重试。');
             });
         }
-        
-        // 重置创作过程
-        function resetCreationProcess() {
-            setTimeout(() => {
-                // 重置选项
-                gradientStops = [
-                    { color: '#ff0000', position: 0, opacity: 100, brightness: 50 },
-                    { color: '#ffff00', position: 50, opacity: 100, brightness: 50 },
-                    { color: '#0000ff', position: 100, opacity: 100, brightness: 50 }
-                ];
-                currentStopIndex = 1;
-                
-                // 重置界面
-                updateGradientBar();
-                updateGradientPreview();
-                updateColorStopControls();
-                
-                // 重置到颜色选择步骤
-                goToStep('color-selection');
-            }, 1000);
+
+        function redirectToGallery() {
+            window.location.href = 'gallery.php';
         }
         
         // 初始化我们同在功能
