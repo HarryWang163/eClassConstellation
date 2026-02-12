@@ -6,6 +6,51 @@ require_once __DIR__ . '/app/includes/auth.php';
 if (!isLoggedIn()) {
     redirectToLogin();
 }
+
+// 处理图片上传API
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_user_image') {
+    header('Content-Type: application/json');
+    
+    try {
+        // 连接数据库
+        require_once __DIR__ . '/app/config/database.php';
+        $db = getDB();
+        
+        $user_id = $_SESSION['user_id'];
+        $img_data = $_POST['img_data'] ?? '';
+        
+        if (empty($img_data)) {
+            echo json_encode(['success' => false, 'message' => '图片数据不能为空']);
+            exit;
+        }
+        
+        // 检查用户是否已有绘画记录
+        $checkStmt = $db->prepare('SELECT id FROM user_images WHERE user_id = ? LIMIT 1');
+        $checkStmt->execute([$user_id]);
+        $existingRecord = $checkStmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($existingRecord) {
+            // 如果存在记录，则更新
+            $updateStmt = $db->prepare('UPDATE user_images SET img = ?, created_at = CURRENT_TIMESTAMP WHERE user_id = ?');
+            $result = $updateStmt->execute([$img_data, $user_id]);
+            $operation = 'updated';
+        } else {
+            // 如果不存在记录，则插入新记录
+            $insertStmt = $db->prepare('INSERT INTO user_images (user_id, img) VALUES (?, ?)');
+            $result = $insertStmt->execute([$user_id, $img_data]);
+            $operation = 'inserted';
+        }
+        
+        if ($result) {
+            echo json_encode(['success' => true, 'message' => '图片保存成功', 'operation' => $operation]);
+        } else {
+            echo json_encode(['success' => false, 'message' => '图片保存失败']);
+        }
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => '数据库错误: ' . $e->getMessage()]);
+    }
+    exit;
+}
 ?>
 
 <?php
@@ -33,7 +78,7 @@ require_once __DIR__ . '/app/includes/header.php';
                     <div class="letter-container">
                         <div class="letter-header">
                             <div class="letter-from">亲爱的同学</div>
-                            <div class="letter-date">2024年12月31日</div>
+                            <div class="letter-date">2025年</div>
                         </div>
                         
                         <div class="letter-content" id="letter-content">
@@ -56,13 +101,6 @@ require_once __DIR__ . '/app/includes/header.php';
             <div class="tab-content" id="we-together">
                 <div class="we-together">
                     <h3>我们同在</h3>
-                    
-                    <!-- 步骤指示器 -->
-                    <div class="steps-indicator">
-                        <div class="step active" data-step="color-selection">选择颜色</div>
-                        <div class="step" data-step="creation">创造内容</div>
-                        <div class="step" data-step="preview">预览提交</div>
-                    </div>
                     
                     <!-- 颜色选择步骤 -->
                     <div class="step-content active" id="color-selection">
@@ -128,10 +166,10 @@ require_once __DIR__ . '/app/includes/header.php';
                     <!-- 创造内容步骤 -->
                     <div class="step-content" id="creation">
                         <div class="creation-container">
-                            <div class="creation-tabs">
+                            <!-- <div class="creation-tabs">
                                 <div class="creation-tab active" data-creation-type="draw">绘画</div>
                                 <div class="creation-tab" data-creation-type="write">写字</div>
-                            </div>
+                            </div> -->
                             
                             <!-- 绘画模式 -->
                             <div class="creation-content active" id="draw-content">
@@ -148,12 +186,12 @@ require_once __DIR__ . '/app/includes/header.php';
                             </div>
                             
                             <!-- 写字模式 -->
-                            <div class="creation-content" id="write-content">
+                            <!-- <div class="creation-content" id="write-content">
                                 <div class="writing-container">
                                     <textarea id="message-input" placeholder="在这里写下你的话..."></textarea>
                                     <div class="writing-preview" id="writing-preview"></div>
                                 </div>
-                            </div>
+                            </div> -->
                             
                             <div class="creation-navigation">
                                 <button class="btn" id="back-to-color">上一步：选择颜色</button>
@@ -265,14 +303,51 @@ require_once __DIR__ . '/app/includes/footer.php';
             max-width: 800px;
             margin: 0 auto 40px;
             padding: 60px;
-            background: url('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=old%20paper%20letter%20background%2C%20vintage%20style%2C%20warm%20tones%2C%20subtle%20texture&image_size=landscape_16_9') no-repeat center center;
-            background-size: cover;
+            background: #f5e9d0; /* 米黄色纸张背景 */
+            background-image: 
+                radial-gradient(#d9c7a7 1px, transparent 1px),
+                radial-gradient(#d9c7a7 1px, transparent 1px);
+            background-size: 30px 30px;
+            background-position: 0 0, 15px 15px;
             border-radius: 15px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 215, 0, 0.2);
+            border: 1px solid rgba(217, 199, 167, 0.5); /* 使用类似纸张的颜色边框 */
             color: #333;
             text-align: left;
             min-height: 500px;
+        }
+        
+        /* 添加纸张纹理效果 */
+        .letter-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                linear-gradient(rgba(217, 199, 167, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(217, 199, 167, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            pointer-events: none;
+            border-radius: 15px;
+        }
+        
+        /* 添加装饰性水印效果 */
+        .letter-container::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            background: 
+                radial-gradient(circle, rgba(217, 199, 167, 0.2) 10%, transparent 10%),
+                radial-gradient(circle, rgba(217, 199, 167, 0.2) 10%, transparent 10%);
+            background-size: 4px 4px;
+            opacity: 0.3;
+            border-radius: 50%;
+            pointer-events: none;
         }
         
         .letter-header {
@@ -337,38 +412,6 @@ require_once __DIR__ . '/app/includes/footer.php';
             margin-bottom: 30px;
             color: #f8f9fa;
             text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-        }
-        
-        /* 步骤指示器 */
-        .steps-indicator {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-bottom: 40px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-        }
-        
-        .step {
-            padding: 10px 25px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            color: rgba(255, 255, 255, 0.7);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: bold;
-        }
-        
-        .step.active {
-            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffd700 100%);
-            color: #0a0a23;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-        }
-        
-        .step:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-3px);
         }
         
         /* 步骤内容 */
@@ -658,13 +701,13 @@ require_once __DIR__ . '/app/includes/footer.php';
         }
         
         /* 写字模式 */
-        .writing-container {
+        /* .writing-container {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 30px;
             margin-bottom: 40px;
-        }
+        } */
         
         #message-input {
             width: 100%;
@@ -685,7 +728,7 @@ require_once __DIR__ . '/app/includes/footer.php';
             color: rgba(255, 255, 255, 0.5);
         }
         
-        .writing-preview {
+        /* .writing-preview {
             width: 100%;
             max-width: 600px;
             min-height: 150px;
@@ -696,7 +739,7 @@ require_once __DIR__ . '/app/includes/footer.php';
             color: rgba(255, 255, 255, 0.9);
             text-align: left;
             line-height: 1.6;
-        }
+        } */
         
         /* 导航按钮 */
         .creation-navigation,
@@ -772,11 +815,6 @@ require_once __DIR__ . '/app/includes/footer.php';
                 padding: 25px;
             }
             
-            .steps-indicator {
-                flex-direction: column;
-                gap: 10px;
-            }
-            
             .color-wheel {
                 width: 250px;
                 height: 250px;
@@ -815,29 +853,52 @@ require_once __DIR__ . '/app/includes/footer.php';
         // 全局变量和初始化
         // =======================
         
-        // 模拟他评数据
-        const evaluationData = [
-            {
-                content: "你是一个非常有责任感的人，总是能够认真完成自己的任务。在班级活动中，你也总是积极参与，为班级做出了很多贡献。希望你在未来的学习和生活中能够继续保持这种积极的态度，不断进步！",
-                author: "同学A"
-            },
-            {
-                content: "你的思维非常敏捷，总是能够在课堂上快速回答老师的问题。同时，你也很乐于助人，经常帮助同学们解决学习上的困难。相信你在未来一定会取得更大的成就！",
-                author: "同学B"
-            },
-            {
-                content: "你是一个很有创意的人，总是能够提出一些独特的想法。在小组活动中，你的创意往往能够给我们带来很多惊喜。希望你能够继续发挥自己的创造力，为我们的班级增添更多的色彩！",
-                author: "同学C"
-            },
-            {
-                content: "你是一个非常努力的人，无论是在学习还是在其他方面，你都付出了很多努力。你的努力也得到了回报，你的成绩一直都很优秀。希望你能够继续保持这种努力的态度，未来一定会更加美好！",
-                author: "同学D"
-            },
-            {
-                content: "你是一个很有团队精神的人，总是能够和同学们很好地合作。在团队活动中，你总是能够发挥自己的优势，为团队做出贡献。希望你能够继续保持这种团队精神，未来一定会有更多的人愿意和你合作！",
-                author: "同学E"
+        <?php
+        // 获取当前用户ID
+        $current_user_id = $_SESSION['user_id'] ?? 0;
+        
+        // 引入数据库配置
+        require_once __DIR__ . '/app/config/database.php';
+        
+        // 调试信息输出
+        // error_log("Current user ID: " . $current_user_id);
+        
+        // 从数据库获取评价数据
+        $evaluationData = [];
+        if ($current_user_id > 0) {
+            try {
+                $db = getDB();
+                error_log("Attempting to fetch evaluations for user ID: " . $current_user_id);
+                
+                $stmt = $db->prepare('SELECT content, author FROM evaluation WHERE target_user_id = ? ORDER BY created_at DESC');
+                $stmt->execute([$current_user_id]);
+                
+                $evaluationData = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                error_log("Found " . count($evaluationData) . " evaluations for user ID: " . $current_user_id);
+                
+                // 如果没有找到评价数据，输出调试信息
+                if (empty($evaluationData)) {
+                    error_log("No evaluations found for user ID: " . $current_user_id . ". Checking if evaluation table exists...");
+                    // TODO: 确定一下是不是空
+                }
+            } catch (PDOException $e) {
+                error_log("Database error occurred: " . $e->getMessage());
+                // 如果出错，返回空数组
+                $evaluationData = [];
             }
-        ];
+        } else {
+            error_log("No user logged in (user_id is 0)");
+        }
+        ?>
+        
+        // 从数据库获取的他评数据
+        const evaluationData = <?php echo json_encode($evaluationData); ?>;
+        const offscreen = document.createElement('canvas');
+        
+        // 输出调试信息到浏览器控制台
+        console.log("Current user ID:", <?php echo json_encode($current_user_id); ?>);
+        console.log("Evaluation data:", evaluationData);
+        console.log("Number of evaluations:", evaluationData.length);
         
         // 他评功能变量
         let currentEvaluationIndex = 0;
@@ -920,11 +981,7 @@ require_once __DIR__ . '/app/includes/footer.php';
         }
         
         // 切换步骤
-        function goToStep(step) {
-            // 更新步骤指示器
-            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-            document.querySelector(`.step[data-step="${step}"]`).classList.add('active');
-            
+        function goToStep(step) {            
             // 更新步骤内容
             document.querySelectorAll('.step-content').forEach(content => content.classList.remove('active'));
             document.getElementById(step).classList.add('active');
@@ -934,7 +991,7 @@ require_once __DIR__ . '/app/includes/footer.php';
             // 初始化对应步骤的功能
             if (step === 'creation') {
                 initDrawing();
-                initWriting();
+                // initWriting();
             }
         }
         
@@ -1212,8 +1269,21 @@ require_once __DIR__ . '/app/includes/footer.php';
                 
                 // 拖动事件
                 let isDragging = false;
+                
+                // 鼠标事件
                 colorStop.addEventListener('mousedown', function(e) {
                     e.stopPropagation();
+                    startDragging(index);
+                });
+                
+                // 触摸事件（移动端支持）
+                colorStop.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    startDragging(index);
+                });
+                
+                function startDragging(index) {
                     isDragging = true;
                     currentStopIndex = index;
                     updateColorStopControls();
@@ -1222,28 +1292,48 @@ require_once __DIR__ . '/app/includes/footer.php';
                     allStops.forEach((s, i) => {
                         s.classList.toggle('active', i === currentStopIndex);
                     });
-                });
+                }
                 
+                // 鼠标移动事件
                 document.addEventListener('mousemove', function(e) {
                     if (isDragging) {
-                        const rect = gradientBar.getBoundingClientRect();
-                        const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-                        const position = Math.round((x / rect.width) * 100);
-                        
-                        // 更新色标位置
-                        gradientStops[currentStopIndex].position = position;
-                        // 重新排序
-                        gradientStops.sort((a, b) => a.position - b.position);
-                        // 更新当前色标索引
-                        currentStopIndex = gradientStops.findIndex(s => s.position === position);
-                        // 更新界面
-                        updateGradientBar();
-                        updateGradientPreview();
-                        updateColorStopControls();
+                        handleDragMove(e.clientX, e.clientY);
                     }
                 });
                 
+                // 触摸移动事件（移动端支持）
+                document.addEventListener('touchmove', function(e) {
+                    if (isDragging) {
+                        e.preventDefault();
+                        const touch = e.touches[0];
+                        handleDragMove(touch.clientX, touch.clientY);
+                    }
+                }, { passive: false });
+                
+                function handleDragMove(clientX, clientY) {
+                    const rect = gradientBar.getBoundingClientRect();
+                    const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
+                    const position = Math.round((x / rect.width) * 100);
+                    
+                    // 更新色标位置
+                    gradientStops[currentStopIndex].position = position;
+                    // 重新排序
+                    gradientStops.sort((a, b) => a.position - b.position);
+                    // 更新当前色标索引
+                    currentStopIndex = gradientStops.findIndex(s => s.position === position);
+                    // 更新界面
+                    updateGradientBar();
+                    updateGradientPreview();
+                    updateColorStopControls();
+                }
+                
+                // 鼠标释放事件
                 document.addEventListener('mouseup', function() {
+                    isDragging = false;
+                });
+                
+                // 触摸结束事件（移动端支持）
+                document.addEventListener('touchend', function() {
                     isDragging = false;
                 });
                 
@@ -1304,8 +1394,8 @@ require_once __DIR__ . '/app/includes/footer.php';
             // 清空画布并覆盖一层白色（稍后我们会用destination-out模式擦除）
             clearCanvas();
             // 绘制一层不透明的白色覆盖整个画布
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+            // ctx.fillStyle = '#ffffff';
+            // ctx.fillRect(0, 0, drawingCanvas.width, drawingCanvas.height);
             
             // 画笔大小
             const brushSizeSlider = document.getElementById('brush-size');
@@ -1405,11 +1495,16 @@ require_once __DIR__ . '/app/includes/footer.php';
         
         // 清空画布
         function clearCanvas() {
-            // 清空画布
-            ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-            // 重新绘制一层不透明的白色覆盖整个画布
+            // 保存当前状态
+            ctx.save();
+            // 重置复合操作，确保能正确绘制白色背景
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
+            // 填充白色背景，确保白色蒙版正确重置
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+            // 恢复原始状态
+            ctx.restore();
         }
         
         // =======================
@@ -1417,14 +1512,14 @@ require_once __DIR__ . '/app/includes/footer.php';
         // =======================
         
         // 初始化写字功能
-        function initWriting() {
-            const messageInput = document.getElementById('message-input');
-            const writingPreview = document.getElementById('writing-preview');
+        // function initWriting() {
+        //     const messageInput = document.getElementById('message-input');
+        //     const writingPreview = document.getElementById('writing-preview');
             
-            messageInput.addEventListener('input', function() {
-                writingPreview.textContent = this.value || '在这里写下你的话...';
-            });
-        }
+        //     messageInput.addEventListener('input', function() {
+        //         writingPreview.textContent = this.value || '在这里写下你的话...';
+        //     });
+        // }
         
         // =======================
         // 颜色处理工具
@@ -1559,7 +1654,6 @@ require_once __DIR__ . '/app/includes/footer.php';
                 const originalCanvas = document.getElementById('drawing-canvas');
 
                 // 创建离屏 canvas 用于合并图层
-                const offscreen = document.createElement('canvas');
                 offscreen.width  = originalCanvas.width;
                 offscreen.height = originalCanvas.height;
                 const offCtx = offscreen.getContext('2d');
@@ -1594,29 +1688,29 @@ require_once __DIR__ . '/app/includes/footer.php';
                 img.style.borderRadius = '8px';
                 finalPreview.appendChild(img);
                 } 
-                else {
-                // 显示文字内容
-                const textPreview = document.createElement('div');
-                textPreview.className = 'text-preview';
+            //     else {
+            //     // 显示文字内容
+            //     const textPreview = document.createElement('div');
+            //     textPreview.className = 'text-preview';
                 
-                if (useGradient) {
-                    // 渐变文字效果（从左上到右下）
-                    textPreview.style.background = generateGradientCSS(gradientStops, '135deg');
-                    textPreview.style.webkitBackgroundClip = 'text';
-                    textPreview.style.webkitTextFillColor = 'transparent';
-                    textPreview.style.backgroundClip = 'text';
-                } else {
-                    // 纯色文字
-                    textPreview.style.color = selectedColor;
-                }
+            //     if (useGradient) {
+            //         // 渐变文字效果（从左上到右下）
+            //         textPreview.style.background = generateGradientCSS(gradientStops, '135deg');
+            //         textPreview.style.webkitBackgroundClip = 'text';
+            //         textPreview.style.webkitTextFillColor = 'transparent';
+            //         textPreview.style.backgroundClip = 'text';
+            //     } else {
+            //         // 纯色文字
+            //         textPreview.style.color = selectedColor;
+            //     }
                 
-                textPreview.style.fontSize = '1rem';
-                textPreview.style.lineHeight = '1.6';
-                textPreview.style.padding = '20px';
-                textPreview.style.textAlign = 'center';
-                textPreview.textContent = document.getElementById('message-input').value || '在这里写下你的话...';
-                finalPreview.appendChild(textPreview);
-            }
+            //     textPreview.style.fontSize = '1rem';
+            //     textPreview.style.lineHeight = '1.6';
+            //     textPreview.style.padding = '20px';
+            //     textPreview.style.textAlign = 'center';
+            //     textPreview.textContent = document.getElementById('message-input').value || '在这里写下你的话...';
+            //     finalPreview.appendChild(textPreview);
+            // }
         }
         
         // 提交创作
@@ -1632,15 +1726,58 @@ require_once __DIR__ . '/app/includes/footer.php';
             if (creationType === 'draw') {
                 // 获取画布数据
                 creationData.image = drawingCanvas.toDataURL('image/png');
+            } 
+            // else {
+            //     // 获取文字内容
+            //     creationData.text = document.getElementById('message-input').value;
+            // }
+            
+            // 如果是绘图类型，则保存图片到数据库
+            if (creationType === 'draw') {
+                saveImageToDatabase(offscreen.toDataURL('image/png'));
             } else {
-                // 获取文字内容
-                creationData.text = document.getElementById('message-input').value;
+                // 显示提交成功
+                alert('创作已提交！');
+                
+                // 重置到第一步
+                resetCreationProcess();
             }
+        }
+        
+        // 将图片保存到数据库
+        function saveImageToDatabase(imgData) {
+            const formData = new FormData();
+            formData.append('action', 'save_user_image');
+            formData.append('img_data', imgData);
             
-            // 显示提交成功
-            alert('创作已提交！实际项目中这里会将数据保存到数据库。');
-            
-            // 重置到第一步
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const operationText = data.operation === 'updated' ? '更新' : '保存';
+                    alert(`创作已提交！图片已${operationText}到数据库。`);
+                } else {
+                    console.error('保存失败:', data.message);
+                    alert('创作提交失败: ' + data.message);
+                }
+                
+                // 重置到第一步
+                resetCreationProcess();
+            })
+            .catch(error => {
+                console.error('保存出错:', error);
+                alert('创作提交失败，请查看控制台了解详情。');
+                
+                // 重置到第一步
+                resetCreationProcess();
+            });
+        }
+        
+        // 重置创作过程
+        function resetCreationProcess() {
             setTimeout(() => {
                 // 重置选项
                 gradientStops = [
