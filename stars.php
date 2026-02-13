@@ -181,6 +181,34 @@ function handleCreateTag($current_user_id, $target_user_id, $data) {
     }
 }
 
+/**
+ * 获取当前用户已评价的不同用户数量
+ */
+function getRatedUserCount($current_user_id) {
+    $db = getDB();
+    $stmt = $db->prepare("
+        SELECT COUNT(DISTINCT selected_user_id) 
+        FROM user_be_selected 
+        WHERE selecter_id = ?
+    ");
+    $stmt->execute([$current_user_id]);
+    return (int) $stmt->fetchColumn();
+}
+
+/**
+ * 获取当前用户可评价的总用户数量（排除自己、不可标记）
+ */
+function getTotalEvaluatableUserCount($current_user_id) {
+    $db = getDB();
+    $stmt = $db->prepare("
+        SELECT COUNT(*) 
+        FROM users 
+        WHERE id != ? AND (if_not_tagable IS NULL OR if_not_tagable = 0)
+    ");
+    $stmt->execute([$current_user_id]);
+    return (int) $stmt->fetchColumn();
+}
+
 // ==================== 请求处理 ====================
 
 // 1. AJAX 请求处理
@@ -236,6 +264,18 @@ require_once __DIR__ . '/app/includes/header.php';
 ?>
 
 <style>
+/* ---------- 手写字体定义 ---------- */
+@font-face {
+    font-family: 'ShouXie';
+    src: url('fonts/shouxie.ttf') format('truetype');
+    font-display: swap;
+}
+
+/* ---------- 步骤卡片：应用手写字体 ---------- */
+.step-card h2,
+.step-card p {
+    font-family: 'ShouXie', 'Microsoft YaHei', '楷体', cursive, sans-serif;
+}
 /* ---------- 全局动画 ---------- */
 body {
     animation: pageFadeIn 0.6s ease-out;
@@ -251,7 +291,7 @@ body {
 
 /* ---------- 主容器 ---------- */
 .stars-container {
-    max-width: 1100px;
+    max-width: 1300px;
     margin: 0 auto;
     padding: 40px 20px;
     color: #fff;
@@ -269,28 +309,28 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 30px;
     padding: 50px 40px;
-    max-width: 700px;
+    max-width: 1300px;
     width: 100%;
     text-align: center;
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
     animation: slideFadeIn 0.8s;
 }
 .step-card h2 {
-    font-size: 2rem;
+    font-size: 5rem;
     margin-bottom: 30px;
     color: #ffd700;
     text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
 }
 .step-card p {
-    font-size: 1.4rem;
-    line-height: 1.8;
+    font-size: 3rem;
+    line-height: 1.5;
     color: rgba(255, 255, 255, 0.9);
     margin-bottom: 40px;
 }
 .username-highlight {
     color: #ffd700;
     font-weight: bold;
-    font-size: 1.6rem;
+    font-size: 5rem;
     text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
 }
 .btn-next {
@@ -647,6 +687,48 @@ body {
     color: #ffd700;
     text-shadow: 0 0 10px rgba(255,215,0,0.5);
 }
+
+/* ---------- 评价进度统计卡片 ---------- */
+.rating-stats {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+    margin-bottom: 20px;
+    width: 100%;
+}
+.stats-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 60px;
+    padding: 15px 30px;
+    display: inline-flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    transition: 0.2s;
+}
+.stats-card:hover {
+    border-color: rgba(255, 215, 0, 0.8);
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.3);
+}
+.stats-label {
+    color: #ffd700;
+    font-weight: 500;
+    font-size: 1rem;
+}
+.stats-number {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+    line-height: 1;
+}
+.stats-unit {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.95rem;
+}
+
 </style>
 
 <main>
@@ -658,7 +740,7 @@ body {
         <h2>✨ 星光互映</h2>
         <p>“同在”，不止是坐在同一间教室</p>
         <p>它是空间的重叠，更是心灵的照映</p>
-        <a href="?step=2" class="btn-next">继续</a>
+        <a href="?step=2" class="btn-next">>>></a>
     </div>
 
 <?php elseif ($step === 2): ?>
@@ -667,17 +749,16 @@ body {
         <h2>🌙 时光之问</h2>
         <p>高中时光过半</p>
         <p>“我”在同学眼中是什么样子的呢？</p>
-        <a href="?step=3" class="btn-next">继续</a>
+        <a href="?step=3" class="btn-next">>>></a>
     </div>
 
 <?php elseif ($step === 3): ?>
     <!-- 第三步 -->
     <div class="step-card">
-        <h2>💌 邀请函</h2>
-        <p><span class="username-highlight">@<?php echo htmlspecialchars($current_username); ?></span></p>
+        <h1><span class="username-highlight">@<?php echo htmlspecialchars($current_username); ?></span></h1>
         <p>邀请你，</p>
         <p>参与一场温柔而奇妙的 “星光互映” 计划</p>
-        <a href="?step=4" class="btn-next">开始互映</a>
+        <a href="?step=4" class="btn-next">>>>让我们开始<<<</a>
     </div>
 
 <?php elseif ($step === 4): ?>
@@ -816,6 +897,17 @@ body {
             </div>
         </div>
         
+        <!-- ---------- 评价进度统计卡片 ---------- -->
+        <?php
+        $rated_count = getRatedUserCount($current_user_id);
+        $total_count = getTotalEvaluatableUserCount($current_user_id);
+        ?>
+        <div class="rating-stats">
+            <div class="stats-card">
+                <span class="stats-number"><?php echo $rated_count; ?> / <?php echo $total_count; ?></span>
+                <span class="stats-unit">位老师/同学已评价</span>
+            </div>
+        </div>
         <div class="back-link">
             <a href="?step=4">← 返回人物选择</a>
         </div>

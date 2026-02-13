@@ -341,6 +341,5 @@
                 <a href="/timeline.php" class="nav-link">时光同轨</a>
                 <a href="/stars.php" class="nav-link">星光互映</a>
                 <a href="/future.php" class="nav-link">星屿共筑</a>
-                <a href="/witness.php" class="nav-link">同在见证</a>
             </div>
         </div>
