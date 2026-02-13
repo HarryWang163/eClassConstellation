@@ -1,14 +1,4 @@
 <?php
-// 引入认证工具
-require_once __DIR__ . '/app/includes/auth.php';
-
-// 检查是否已登录
-if (!isLoggedIn()) {
-    redirectToLogin();
-}
-?>
-
-<?php
 // 引入公共头部
 require_once __DIR__ . '/app/includes/header.php';
 ?>
