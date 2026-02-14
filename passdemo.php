@@ -326,7 +326,7 @@ require_once __DIR__ . '/app/includes/footer.php';
                     "C C和P",
                     "D A和E"
                 ],
-                correctAnswer: 0
+                correctAnswer: 2
             },
             {
                 id: 3,
@@ -377,7 +377,7 @@ require_once __DIR__ . '/app/includes/footer.php';
                 question: "11班第一次值周的值周主题是",
                 options: [
                     "A 创新驱动艺术 智慧引领文化",
-                    "B 创新驱动智慧 艺术引领文化",
+                    "B 智慧驱动艺术 创新引领文化",
                     "C 创新驱动文化 智慧引领艺术",
                     "D 智慧驱动文化 创新引领艺术"
                 ],

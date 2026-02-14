@@ -49,7 +49,7 @@ function getRatedUserIds($current_user_id) {
     ");
     $stmt->execute([$current_user_id]);
     return $stmt->fetchAll(PDO::FETCH_COLUMN);
-
+}
 
 /**
  * 获取所有可用标签（按分类分组，每组内按id升序）
