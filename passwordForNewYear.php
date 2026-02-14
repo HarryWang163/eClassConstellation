@@ -27,37 +27,42 @@ $current_user_id = $_SESSION['user_id'] ?? 0;
 function getCurrentProgress($user_id) {
     $db = getDB();
 
-    // 1. 查询已完成组
-    $stmt = $db->prepare("SELECT question_group FROM user_score WHERE user_id = ?");
+    // 查询已完成组
+    $stmt = $db->prepare("SELECT question_group FROM user_score WHERE user_id = ? ORDER BY question_group");
     $stmt->execute([$user_id]);
     $finishedGroups = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-    // 2. 确定进行中的组（从1开始，跳过已完成组）
-    for ($group = 1; $group <= 3; $group++) {
-        if (in_array($group, $finishedGroups)) continue;
-
-        // 查询该组已答题目数
-        $stmt = $db->prepare("
-            SELECT COUNT(*) FROM user_answer 
-            WHERE user_id = ? AND question_id IN (
-                SELECT id FROM questions WHERE groupAffiliation = ?
-            )
-        ");
-        $stmt->execute([$user_id, $group]);
-        $answered = $stmt->fetchColumn();
-
-        if ($answered < 10) {
-            // 未完成，返回下一题索引（从0开始）
-            return ['group' => $group, 'index' => $answered];
-        } else {
-            // 刚好10题但未记录分数？可能异常，强制完成
-            // 这种情况可以自动完成组，但这里简单处理为已完成
-            continue;
-        }
+    // 如果没有完成任何组，从组1开始
+    if (empty($finishedGroups)) {
+        return ['group' => 1, 'index' => 0];
     }
 
-    // 所有组完成
-    return null;
+    $maxFinished = max($finishedGroups);
+
+    // 全部完成
+    if ($maxFinished == 3) {
+        return null;
+    }
+
+    $nextGroup = $maxFinished + 1;
+
+    // 检查下一组是否有答题记录
+    $stmt = $db->prepare("
+        SELECT COUNT(*) FROM user_answer 
+        WHERE user_id = ? AND question_id IN (
+            SELECT id FROM questions WHERE groupAffiliation = ?
+        )
+    ");
+    $stmt->execute([$user_id, $nextGroup]);
+    $answered = $stmt->fetchColumn();
+
+    if ($answered > 0) {
+        // 已开始下一组，继续
+        return ['group' => $nextGroup, 'index' => $answered];
+    } else {
+        // 未开始下一组，返回已完成组的结果页
+        return ['status' => 'finished_group', 'group' => $maxFinished];
+    }
 }
 
 /**
@@ -238,46 +243,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'submit') {
 }
 
 // 其他 API 动作（如 get_current、get_result）也要类似地包裹 try-catch
-
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get_current') {
     header('Content-Type: application/json');
     try {
-    $progress = getCurrentProgress($current_user_id);
+        // 如果指定了 group 参数，则强制进入该组
+        $forceGroup = isset($_GET['group']) ? intval($_GET['group']) : 0;
+        if ($forceGroup) {
+            $finished = getFinishedGroups($current_user_id);
+            if (in_array($forceGroup, $finished)) {
+                // 该组已完成，返回结果页
+                echo json_encode(['status' => 'finished_group', 'group' => $forceGroup]);
+                exit;
+            }
+            // 获取该组答题进度
+            $db = getDB();
+            $stmt = $db->prepare("SELECT COUNT(*) FROM user_answer WHERE user_id = ? AND question_id IN (SELECT id FROM questions WHERE groupAffiliation = ?)");
+            $stmt->execute([$current_user_id, $forceGroup]);
+            $answered = $stmt->fetchColumn();
+            if ($answered >= 10) {
+                echo json_encode(['status' => 'finished_group', 'group' => $forceGroup]);
+                exit;
+            }
+            $question = getQuestion($forceGroup, $answered);
+            if (!$question) {
+                throw new Exception('题目不存在');
+            }
+            echo json_encode([
+                'status' => 'in_progress',
+                'group' => $forceGroup,
+                'index' => $answered + 1,
+                'total' => 10,
+                'question' => [
+                    'id' => $question['id'],
+                    'text' => $question['question'],
+                    'options' => [$question['optionA'], $question['optionB'], $question['optionC'], $question['optionD']],
+                    'description' => $question['description']
+                ]
+            ]);
+            exit;
+        }
 
-    if ($progress === null) {
-        // 所有组完成，返回已完成组列表
-        $finished = getFinishedGroups($current_user_id);
-        echo json_encode(['status' => 'all_finished', 'groups' => $finished]);
-        exit;
-    }
-
-    $question = getQuestion($progress['group'], $progress['index']);
-    if (!$question) {
-        echo json_encode(['status' => 'error', 'message' => '题目不存在']);
-        exit;
-    }
-
-    echo json_encode([
-        'status' => 'in_progress',
-        'group' => $progress['group'],
-        'index' => $progress['index'] + 1, // 前端从1开始显示
-        'total' => 10,
-        'question' => [
-            'id' => $question['id'],
-            'text' => $question['question'],
-            'options' => [
-                $question['optionA'],
-                $question['optionB'],
-                $question['optionC'],
-                $question['optionD']
-            ],
-            'description' => $question['description']
-        ]
-    ]);
-        } catch (PDOException $e) {
-        echo json_encode(['success' => false, 'message' => '数据库错误：' . $e->getMessage()]);
+        // 原有逻辑
+        $progress = getCurrentProgress($current_user_id);
+        if ($progress === null) {
+            $finished = getFinishedGroups($current_user_id);
+            echo json_encode(['status' => 'all_finished', 'groups' => $finished]);
+            exit;
+        }
+        if (isset($progress['status']) && $progress['status'] === 'finished_group') {
+            echo json_encode(['status' => 'finished_group', 'group' => $progress['group']]);
+            exit;
+        }
+        $question = getQuestion($progress['group'], $progress['index']);
+        if (!$question) {
+            throw new Exception('题目不存在');
+        }
+        echo json_encode([
+            'status' => 'in_progress',
+            'group' => $progress['group'],
+            'index' => $progress['index'] + 1,
+            'total' => 10,
+            'question' => [
+                'id' => $question['id'],
+                'text' => $question['question'],
+                'options' => [$question['optionA'], $question['optionB'], $question['optionC'], $question['optionD']],
+                'description' => $question['description']
+            ]
+        ]);
     } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
     }
     exit;
 }
@@ -321,6 +355,9 @@ require_once __DIR__ . '/app/includes/headerWithoutBar.php';
 ?>
 
 <style>
+    h2{
+        color: #f8f9fa;
+    }
     /* 原有样式保持不变，略作精简 */
     .test-container {
         background: rgba(255, 255, 255, 0.08);
@@ -547,15 +584,10 @@ require_once __DIR__ . '/app/includes/headerWithoutBar.php';
         const data = await res.json();
 
         if (data.status === 'all_finished') {
-            // 所有组完成，显示最后一个完成组的结果
-            if (data.groups.length > 0) {
-                showResult(data.groups[data.groups.length - 1]);
-            } else {
-                // 没有完成组，实际上不会发生
-                showStart();
-            }
+            showResult(data.groups[data.groups.length - 1]);
+        } else if (data.status === 'finished_group') {
+            showResult(data.group);
         } else if (data.status === 'in_progress') {
-            // 进行中，显示题目
             currentGroup = data.group;
             currentIndex = data.index;
             currentQuestionId = data.question.id;
@@ -563,7 +595,7 @@ require_once __DIR__ . '/app/includes/headerWithoutBar.php';
         } else if (data.status === 'error') {
             container.innerHTML = `<div class="error">${data.message}</div>`;
         }
-    }
+    }   
 
     // 显示题目
     function displayQuestion(q, index, total) {
@@ -724,15 +756,16 @@ async function submitAnswer() {
                         <p>总答题数 <span class="highlight">10</span></p>
                     </div>
                     <div class="result-actions">
-                        <button class="btn" id="next-group">再来一个题组</button>
+                        ${r.group < 3 ? '<button class="btn" id="next-group">再来一个题组</button>' : ''}
                         <button class="btn btn-secondary" id="continue">继续下一个环节</button>
                     </div>
                 </div>
             `;
-            document.getElementById('next-group').addEventListener('click', () => {
-                // 尝试开始下一组
-                window.location.reload(); // 简单刷新，会自动进入下一组
-            });
+            if (r.group < 3) {
+                document.getElementById('next-group').addEventListener('click', () => {
+                    window.location.href = `?group=${r.group + 1}`;
+                });
+            }
             document.getElementById('continue').addEventListener('click', () => {
                 window.location.href = 'witness.php';
             });
