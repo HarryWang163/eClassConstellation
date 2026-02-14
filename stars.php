@@ -1145,7 +1145,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php
-// 引入公共页脚
-require_once __DIR__ . '/app/includes/footer.php';
-?>

@@ -1,6 +1,5 @@
         <footer>
             <p>© 2026 高二11班 · 同在计划</p>
-            <p style="margin-top: 10px;">时光不老，我们不散</p>
         </footer>
     </div>
     

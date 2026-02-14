@@ -244,7 +244,7 @@ require_once __DIR__ . '/app/includes/header.php';
     
     <!-- 四个活动图片水平一排 -->
     <div class="activities-row">
-        <a href="password.php" class="activity-link">
+        <a href="passdemo.php" class="activity-link">
         <div class="activity-item">
             <img src="images/icon-password.png" alt="同在密码" class="activity-icon-img">
         </div>
