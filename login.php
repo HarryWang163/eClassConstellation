@@ -33,11 +33,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <head>
                         <title>重定向中...</title>
                         <script>
-                            window.location.href = "dashboard.php";
+                            window.location.href = "index.php";
                         </script>
                     </head>
                     <body>
-                        <p>如果页面没有自动跳转，请<a href="dashboard.php">点击这里</a>。</p>
+                        <p>如果页面没有自动跳转，请<a href="index.php">点击这里</a>。</p>
                     </body>
                     </html>';
                     exit();
