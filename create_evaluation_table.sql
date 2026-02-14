@@ -61,3 +61,25 @@ INSERT INTO blessings (user_id, content) VALUES
 (8, '工作顺利'),
 (9, '笑口常开');
 */
+
+-- 创建画板元素表用于存储用户在画板上添加的图片元素
+CREATE TABLE IF NOT EXISTS canvas_elements (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL COMMENT '用户ID',
+    pos_x INT NOT NULL COMMENT '元素在画板上的X坐标',
+    pos_y INT NOT NULL COMMENT '元素在画板上的Y坐标',
+    -- image_data TEXT NOT NULL COMMENT '图片数据（URL或Base64）',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    INDEX idx_user_id (user_id)
+    -- 暂时移除外键约束，以避免插入测试数据时出现问题
+    -- 如果确定 users 表存在且结构正确，可以加上外键约束：
+    -- , FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 插入示例画板元素数据
+/*
+INSERT INTO canvas_elements (user_id, pos_x, pos_y, image_data) VALUES
+(1, 640, 400, 'https://example.com/image1.jpg'),
+(2, 320, 200, 'https://example.com/image2.jpg'),
+(3, 960, 600, 'https://example.com/image3.jpg');
+*/
