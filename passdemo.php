@@ -4,7 +4,7 @@ require_once __DIR__ . '/app/includes/header.php';
 ?>
 
         <header>
-            <h1>同在密码</h1>
+            <h1>同在密码Demo</h1>
             <p class="subtitle">11班终极认证测试</p>
         </header>
         
@@ -591,10 +591,12 @@ require_once __DIR__ . '/app/includes/footer.php';
             helpPageElement.className = 'help-page';
             helpPageElement.innerHTML = `
                 <div class="help-content">
-                    <h2 class="help-title">我们需要你的帮助</h2>
-                    <p class="help-text">为了完善11班的"同在密码"系统，我们需要你的参与！</p>
-                    <p class="help-text">请点击下方按钮，填写11班的"同在密码"问卷，帮助我们收集更多班级信息。</p>
-                    <button class="btn help-button" id="help-button">填写"同在密码"</button>
+                    <p class="help-text">完整的测评将在除夕正式活动时开发哦( •̀ ω •́ )✧</p>
+                    <h2 class="help-title">什么？你有更有意思的题目？</h2>
+                    <p class="help-text">完善11班的"同在密码"系统，我们需要你的参与！</p>
+                    <p class="help-text">填写11班的"同在密码"问卷，帮助我们收集更多创意！</p>
+                    <p class="help-text">https://v.wjx.cn/vm/wFyHkOM.aspx</p>
+                    <button class="btn help-button" id="help-button">导航到"同在密码"问卷</button>
                 </div>
             `;
             

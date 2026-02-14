@@ -49,10 +49,14 @@ function getRatedUserIds($current_user_id) {
     ");
     $stmt->execute([$current_user_id]);
     return $stmt->fetchAll(PDO::FETCH_COLUMN);
-}
+
 
 /**
  * 获取所有可用标签（按分类分组，每组内按id升序）
+ * @param int $target_user_id 当前被评价用户ID，用于筛选专属标签
+ */
+/**
+ * 获取所有可用标签（按分类分组，每组内随机排序）
  * @param int $target_user_id 当前被评价用户ID，用于筛选专属标签
  */
 function getAllTagsGrouped($target_user_id) {
@@ -62,7 +66,7 @@ function getAllTagsGrouped($target_user_id) {
         FROM tags 
         WHERE tagclass IS NOT NULL AND tagclass != ''
           AND (if_for_one_user = 0 OR (if_for_one_user = 1 AND one_user_id = ?))
-        ORDER BY tagclass, id ASC
+        ORDER BY tagclass  -- 只需按分类排序，组内顺序由 shuffle 决定
     ");
     $stmt->execute([$target_user_id]);
     $tags = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -71,6 +75,12 @@ function getAllTagsGrouped($target_user_id) {
     foreach ($tags as $tag) {
         $grouped[$tag['tagclass']][] = $tag;
     }
+    
+    // 对每个分类内的标签数组进行随机打乱
+    foreach ($grouped as &$tagList) {
+        shuffle($tagList);  // 随机重排
+    }
+    
     return $grouped;
 }
 
@@ -728,7 +738,28 @@ body {
     color: rgba(255, 255, 255, 0.8);
     font-size: 0.95rem;
 }
-
+/* ---------- 移动端适配：缩小前三步字体 ---------- */
+@media (max-width: 768px) {
+    .step-card {
+        padding: 30px 20px; /* 减少内边距，让内容更紧凑 */
+    }
+    .step-card h2 {
+        font-size: 2.8rem;   /* 从 5rem 缩小 */
+        margin-bottom: 20px;
+    }
+    .step-card p {
+        font-size: 1.8rem;   /* 从 3rem 缩小 */
+        line-height: 1.4;
+        margin-bottom: 30px;
+    }
+    .username-highlight {
+        font-size: 2.8rem;   /* 从 5rem 缩小 */
+    }
+    .btn-next {
+        font-size: 1rem;      /* 稍微缩小一点按钮文字 */
+        padding: 12px 30px;
+    }
+}
 </style>
 
 <main>
@@ -764,7 +795,7 @@ body {
 <?php elseif ($step === 4): ?>
     <!-- 人物选择页 -->
     <div style="width:100%; text-align:center; animation: slideFadeIn 0.6s;">
-        <h1 style="color:#ffd700; font-size:2.5rem; text-shadow:0 0 20px rgba(255,215,0,0.5); margin-bottom:20px;">🌟 选择一位同学</h1>
+        <h1 style="color:#ffd700; font-size:2.5rem; text-shadow:0 0 20px rgba(255,215,0,0.5); margin-bottom:20px;">🌟 选择一位老师或同学</h1>
         <p style="color:rgba(255,255,255,0.8); font-size:1.2rem; margin-bottom:40px;">已点亮的按钮表示你已评价过TA</p>
         
         <div class="user-grid">
@@ -866,7 +897,7 @@ body {
                 <h2>✨ 创建新标签</h2>
                 <div class="form-group">
                     <label>标签名 <span style="color:#ffd700;">*</span></label>
-                    <input type="text" id="new-tagname" placeholder="例如：编程高手" maxlength="50">
+                    <input type="text" id="new-tagname" placeholder="例如：足球大神" maxlength="50">
                 </div>
                 <div class="form-group">
                     <label>描述（选填）</label>
