@@ -34,7 +34,6 @@ if (!isLoggedIn()) {
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
             position: relative;
         }
         /* 星光背景 */
@@ -331,9 +330,9 @@ if (!isLoggedIn()) {
                     index++;
                     setTimeout(showNextLine, 1200); // 每句间隔0.8秒
                 } else {
-                    // 所有句子显示完后，显示底部提示
-                    footer.classList.add('show');
-                    // 3秒后跳转到 dashboard.php
+                    setTimeout(() => {
+                        footer.classList.add('show');
+                    }, 2400);
                 }
             }
 

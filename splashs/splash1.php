@@ -34,7 +34,6 @@ if (!isLoggedIn()) {
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
             position: relative;
         }
         /* 星光背景 */

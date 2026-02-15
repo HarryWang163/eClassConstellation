@@ -32,48 +32,44 @@ function getCurrentProgress($user_id) {
     $stmt->execute([$user_id]);
     $finishedGroups = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-    // 2. 如果没有完成任何组，从组1第一题开始
-    if (empty($finishedGroups)) {
-        return ['group' => 1, 'index' => 0];
+    // 2. 确定当前应进行的组（如果没有完成组，从组1开始；否则从已完成组的下一组开始）
+    $currentGroup = empty($finishedGroups) ? 1 : max($finishedGroups) + 1;
+
+    // 如果超过总组数（假设有3组），则全部完成
+    if ($currentGroup > 3) {
+        return null;
     }
 
-    // 3. 已完成组的最大值
-    $lastFinished = max($finishedGroups);
-
-    // 4. 如果全部完成（假设3组）
-    if ($lastFinished == 3) {
-        return null; // 全部完成
-    }
-
-    // 5. 下一组
-    $nextGroup = $lastFinished + 1;
-
-    // 6. 查询下一组已答题目数
+    // 3. 查询当前组已经回答了多少题
     $stmt = $db->prepare("
         SELECT COUNT(*) FROM user_answer 
         WHERE user_id = ? AND question_id IN (
             SELECT id FROM questions WHERE groupAffiliation = ?
         )
     ");
-    $stmt->execute([$user_id, $nextGroup]);
+    $stmt->execute([$user_id, $currentGroup]);
     $answered = $stmt->fetchColumn();
 
+    // 4. 根据已答数量返回不同状态
     if ($answered >= 10) {
-        // 异常：已答满10题但未记录分数，尝试自动完成
+        // 异常情况：已答满10题但 user_score 中无记录（可能是之前逻辑遗漏）
+        // 尝试自动完成组并记录分数
         try {
-            finishGroup($user_id, $nextGroup);
-            // 递归重新计算进度
-            return getCurrentProgress($user_id);
+            finishGroup($user_id, $currentGroup);
+            // 完成后推进到下一组
+            $currentGroup++;
+            if ($currentGroup > 3) return null;
+            return ['group' => $currentGroup, 'index' => 0];
         } catch (Exception $e) {
-            // 自动完成失败，至少让用户看到该组的结果页
-            return ['status' => 'finished_group', 'group' => $nextGroup];
+            // 如果自动完成失败，至少让用户看到当前组的结果页
+            return ['status' => 'finished_group', 'group' => $currentGroup];
         }
     } elseif ($answered > 0) {
-        // 已开始但未完成，返回下一题索引
-        return ['group' => $nextGroup, 'index' => $answered];
+        // 已开始但未完成，返回下一题索引（从0开始）
+        return ['group' => $currentGroup, 'index' => $answered];
     } else {
-        // 未开始下一组，返回上一组的结果页
-        return ['status' => 'finished_group', 'group' => $lastFinished];
+        // 未开始当前组，从第一题开始
+        return ['group' => $currentGroup, 'index' => 0];
     }
 }
 
@@ -793,8 +789,8 @@ async function submitAnswer() {
                     <div class="result-stats">
                         <p>本题组答对 <span class="highlight">${r.correct}</span> 题</p>
                         <p>得分 <span class="highlight">${r.score}</span> 分</p>
-                        <p>正确率 <span class="highlight">${(r.correct/10*100).toFixed(1)}%</span></p>
-                        <p>超过了 <span class="highlight">${r.percent}%</span> 的选手</p>
+                    <!--    <p>正确率 <span class="highlight">${(r.correct/10*100).toFixed(1)}%</span></p> -->
+                    <!--    <p>超过了 <span class="highlight">${r.percent}%</span> 的选手</p> -->
                         <p>总答题数 <span class="highlight">10</span></p>
                     </div>
                     <div class="result-actions">

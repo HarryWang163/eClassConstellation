@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 }
 
 // 引入公共头部（无标题）
-require_once __DIR__ . '/app/includes/header.php';
+require_once __DIR__ . '/app/includes/headerWithoutBar.php';
 ?>
 
 <div class="future-container">

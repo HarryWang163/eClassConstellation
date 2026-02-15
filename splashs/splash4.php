@@ -254,15 +254,16 @@ if (!isLoggedIn()) {
     <div class="stars" id="stars"></div>
 
     <div class="splash-container">
-        <div class="line" id="line1">这些看似微不足道的细节</div>
-        <div class="line" id="line2">因为被集体记忆</div>
-        <div class="line" id="line3">成为我们之间坚固的联结。</div>
-        <div class="line" id="line4">答对与否，胜负几何，并不重要</div>
-        <div class="line" id="line5">当我们默契地寻找答案的那一刻</div>
-        <div class="line" id="line6">“同在”的谜底，已经被我们亲手揭晓</div>
+        <div class="line" id="line1">有这样一群人</div>
+        <div class="line" id="line2">与我们朝夕相处，悉心指导我们的学业与生活</div>
+        <div class="line" id="line3">冬日的清晨也好，夏日的正午也罢</div>
+        <div class="line" id="line4">他们始终与我们同在</div>
+        <div class="line" id="line5">让我们的日常拥有鲜明的底色</div>
+        <div class="line" id="line6">此刻</div>
+        <div class="line special" id="line7">让我们听听老师们对我们最好的祝福——</div>
         <div class="footer-note" id="footer">
             <div class="back-link">
-                <a href="/splashs/splash4.php">✨ 继续 ✨</a>
+                <a href="/../witness.php">✨ >>> ✨</a>
             </div>
         </div>
     </div>
@@ -315,7 +316,8 @@ if (!isLoggedIn()) {
                 document.getElementById('line3'),
                 document.getElementById('line4'),
                 document.getElementById('line5'),
-                document.getElementById('line6')
+                document.getElementById('line6'),
+                document.getElementById('line7')
             ];
             const footer = document.getElementById('footer');
             let index = 0;

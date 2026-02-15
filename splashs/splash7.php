@@ -254,15 +254,22 @@ if (!isLoggedIn()) {
     <div class="stars" id="stars"></div>
 
     <div class="splash-container">
-        <div class="line" id="line1">这些看似微不足道的细节</div>
-        <div class="line" id="line2">因为被集体记忆</div>
-        <div class="line" id="line3">成为我们之间坚固的联结。</div>
-        <div class="line" id="line4">答对与否，胜负几何，并不重要</div>
-        <div class="line" id="line5">当我们默契地寻找答案的那一刻</div>
-        <div class="line" id="line6">“同在”的谜底，已经被我们亲手揭晓</div>
+        <div class="line" id="line1">我们要时刻提醒我们，</div>
+        <div class="line" id="line2">也要提醒身边的人这一点。</div>
+        <div class="line" id="line3">当我们写着用厘米去计算的作业，听到脑海里模糊的上课铃与下课铃声</div>
+        <div class="line" id="line4">当我们在未来被各种DDL狂追，因为生活忙得不可开交的时候</div>
+        <div class="line" id="line5">我们总要记得</div>
+        <div class="line" id="line6">曾经所有并肩同在的瞬息</div>
+        <div class="line" id="line7">那些我们热爱过的人、事、物</div>
+        <div class="line" id="line8">我们携手努力、未来同赴的时光</div>
+        <div class="line" id="line9">不经意间想起</div>
+        <div class="line" id="line10">会重新在每一个陈旧的午后、倦怠的夜晚</div>
+        <div class="line" id="line11">点亮我们的生命</div>
+        <div class="line special" id="line12">让我们更加勇敢地去发光</div>
         <div class="footer-note" id="footer">
             <div class="back-link">
-                <a href="/splashs/splash4.php">✨ 继续 ✨</a>
+                <a href="/dashboard.php">✨ 我们同在 ✨</a>
+
             </div>
         </div>
     </div>
@@ -315,7 +322,13 @@ if (!isLoggedIn()) {
                 document.getElementById('line3'),
                 document.getElementById('line4'),
                 document.getElementById('line5'),
-                document.getElementById('line6')
+                document.getElementById('line6'),
+                document.getElementById('line7'),
+                document.getElementById('line8'),
+                document.getElementById('line9'),
+                document.getElementById('line10'),
+                document.getElementById('line11'),
+                document.getElementById('line12')
             ];
             const footer = document.getElementById('footer');
             let index = 0;

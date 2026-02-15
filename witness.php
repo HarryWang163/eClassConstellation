@@ -389,7 +389,7 @@ require_once __DIR__ . '/app/includes/headerWithoutBar.php';
                         您的浏览器不支持视频播放。
                     </video>
                 </div>
-                <p style="text-align:center; color:rgba(255,255,255,0.6); margin-top:20px;">点击播放，接收老师们的祝福</p>
+                <p style="text-align:center; color:rgba(255,255,255,0.6); margin-top:20px;">点击播放，接收来自林老师的祝福( •̀ ω •́ )✧</p>
             `;
         } else {
             html = `
@@ -427,13 +427,12 @@ require_once __DIR__ . '/app/includes/headerWithoutBar.php';
             // 最后一页：下一页按钮变为“星屿共筑”，可点击，不disabled
             nextBtn.disabled = false;
             nextBtn.textContent = '星屿共筑 →';
-            // 隐藏返回主页面链接
+            // 隐藏主返回页面链接
             backLink.style.display = 'none';
         } else {
             nextBtn.disabled = false;
             nextBtn.textContent = '下一页 →';
-            // 显示返回主页面链接
-            backLink.style.display = 'block';
+            backLink.style.display = 'none';
         }
     }
 
@@ -441,7 +440,7 @@ require_once __DIR__ . '/app/includes/headerWithoutBar.php';
     nextBtn.addEventListener('click', () => {
         if (currentPage === pages.length - 1) {
             // 最后一页，跳转到 splashs/splashs5.php
-            window.location.href = 'splashs/splashs5.php';
+            window.location.href = 'splashs/splash5.php';
         } else if (currentPage < pages.length - 1) {
             currentPage++;
             renderPage(currentPage);
