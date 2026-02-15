@@ -27,26 +27,28 @@ $current_user_id = $_SESSION['user_id'] ?? 0;
 function getCurrentProgress($user_id) {
     $db = getDB();
 
-    // 查询已完成组
+    // 1. 获取所有已完成组（user_score 中存在记录）
     $stmt = $db->prepare("SELECT question_group FROM user_score WHERE user_id = ? ORDER BY question_group");
     $stmt->execute([$user_id]);
     $finishedGroups = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-    // 如果没有完成任何组，从组1开始
+    // 2. 如果没有完成任何组，从组1第一题开始
     if (empty($finishedGroups)) {
         return ['group' => 1, 'index' => 0];
     }
 
-    $maxFinished = max($finishedGroups);
+    // 3. 已完成组的最大值
+    $lastFinished = max($finishedGroups);
 
-    // 全部完成
-    if ($maxFinished == 3) {
-        return null;
+    // 4. 如果全部完成（假设3组）
+    if ($lastFinished == 3) {
+        return null; // 全部完成
     }
 
-    $nextGroup = $maxFinished + 1;
+    // 5. 下一组
+    $nextGroup = $lastFinished + 1;
 
-    // 检查下一组是否有答题记录
+    // 6. 查询下一组已答题目数
     $stmt = $db->prepare("
         SELECT COUNT(*) FROM user_answer 
         WHERE user_id = ? AND question_id IN (
@@ -56,12 +58,22 @@ function getCurrentProgress($user_id) {
     $stmt->execute([$user_id, $nextGroup]);
     $answered = $stmt->fetchColumn();
 
-    if ($answered > 0) {
-        // 已开始下一组，继续
+    if ($answered >= 10) {
+        // 异常：已答满10题但未记录分数，尝试自动完成
+        try {
+            finishGroup($user_id, $nextGroup);
+            // 递归重新计算进度
+            return getCurrentProgress($user_id);
+        } catch (Exception $e) {
+            // 自动完成失败，至少让用户看到该组的结果页
+            return ['status' => 'finished_group', 'group' => $nextGroup];
+        }
+    } elseif ($answered > 0) {
+        // 已开始但未完成，返回下一题索引
         return ['group' => $nextGroup, 'index' => $answered];
     } else {
-        // 未开始下一组，返回已完成组的结果页
-        return ['status' => 'finished_group', 'group' => $maxFinished];
+        // 未开始下一组，返回上一组的结果页
+        return ['status' => 'finished_group', 'group' => $lastFinished];
     }
 }
 
@@ -99,33 +111,41 @@ function recordAnswer($user_id, $question_id, $selected_answer, $is_correct) {
 
 function finishGroup($user_id, $group) {
     $db = getDB();
-    try {
-        // 统计该组答对题数
-        $stmt = $db->prepare("
-            SELECT COUNT(*) FROM user_answer
-            WHERE user_id = ? AND if_right = 1 AND question_id IN (
-                SELECT id FROM questions WHERE groupAffiliation = ?
-            )
-        ");
+
+    // 先检查该组是否已有分数记录
+    $stmt = $db->prepare("SELECT id FROM user_score WHERE user_id = ? AND question_group = ?");
+    $stmt->execute([$user_id, $group]);
+    if ($stmt->fetch()) {
+        // 已有记录，直接返回现有分数
+        $stmt = $db->prepare("SELECT score FROM user_score WHERE user_id = ? AND question_group = ?");
         $stmt->execute([$user_id, $group]);
-        $correct = $stmt->fetchColumn();
-        $score = $correct * 10;
-
-        // 插入 user_score
-        $stmt = $db->prepare("
-            INSERT INTO user_score (user_id, score, question_group)
-            VALUES (?, ?, ?)
-        ");
-        $success = $stmt->execute([$user_id, $score, $group]);
-
-        if (!$success) {
-            throw new Exception('无法保存分数');
-        }
-
-        return ['correct' => $correct, 'score' => $score];
-    } catch (PDOException $e) {
-        throw new Exception('数据库错误：' . $e->getMessage());
+        $score = $stmt->fetchColumn();
+        return ['correct' => $score / 10, 'score' => $score];
     }
+
+    // 统计该组答对题数
+    $stmt = $db->prepare("
+        SELECT COUNT(*) FROM user_answer
+        WHERE user_id = ? AND if_right = 1 AND question_id IN (
+            SELECT id FROM questions WHERE groupAffiliation = ?
+        )
+    ");
+    $stmt->execute([$user_id, $group]);
+    $correct = $stmt->fetchColumn();
+    $score = $correct * 10;
+
+    // 插入 user_score
+    $stmt = $db->prepare("
+        INSERT INTO user_score (user_id, score, question_group)
+        VALUES (?, ?, ?)
+    ");
+    $success = $stmt->execute([$user_id, $score, $group]);
+
+    if (!$success) {
+        throw new Exception('无法保存分数');
+    }
+
+    return ['correct' => $correct, 'score' => $score];
 }
 
 /**
@@ -224,6 +244,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'submit') {
         $result = [
             'success' => true,
             'correct' => $is_correct,
+            'correct_answer' => $q['answer'] - 1, // 数据库1-based → 前端0-based
             'description' => $q['description'] ?? '',
             'group_finished' => $group_finished
         ];
@@ -579,23 +600,33 @@ require_once __DIR__ . '/app/includes/headerWithoutBar.php';
     let selectedAnswer = null;
 
     // 加载初始状态
-    async function loadInitial() {
-        const res = await fetch('?action=get_current');
-        const data = await res.json();
+async function loadInitial() {
+    // 获取当前 URL 中的 group 参数
+    const urlParams = new URLSearchParams(window.location.search);
+    const groupParam = urlParams.get('group');
 
-        if (data.status === 'all_finished') {
-            showResult(data.groups[data.groups.length - 1]);
-        } else if (data.status === 'finished_group') {
-            showResult(data.group);
-        } else if (data.status === 'in_progress') {
-            currentGroup = data.group;
-            currentIndex = data.index;
-            currentQuestionId = data.question.id;
-            displayQuestion(data.question, currentIndex, data.total);
-        } else if (data.status === 'error') {
-            container.innerHTML = `<div class="error">${data.message}</div>`;
-        }
-    }   
+    // 构建 API 请求 URL
+    let apiUrl = '?action=get_current';
+    if (groupParam) {
+        apiUrl += '&group=' + groupParam;
+    }
+
+    const res = await fetch(apiUrl);
+    const data = await res.json();
+
+    if (data.status === 'all_finished') {
+        showResult(data.groups[data.groups.length - 1]);
+    } else if (data.status === 'finished_group') {
+        showResult(data.group);
+    } else if (data.status === 'in_progress') {
+        currentGroup = data.group;
+        currentIndex = data.index;
+        currentQuestionId = data.question.id;
+        displayQuestion(data.question, currentIndex, data.total);
+    } else if (data.status === 'error') {
+        container.innerHTML = `<div class="error">${data.message}</div>`;
+    }
+}
 
     // 显示题目
     function displayQuestion(q, index, total) {
@@ -683,30 +714,34 @@ async function submitAnswer() {
             throw new Error('服务器返回格式错误，请查看控制台');
         }
 
-        if (data.success) {
-            // 显示正确/错误样式
+       if (data.success) {
             const options = document.querySelectorAll('.option');
+
+            // 1. 标记正确答案（总是绿色）
+            options[data.correct_answer].classList.add('correct');
+
+            // 2. 处理用户答案
             if (data.correct) {
-                options[selectedAnswer].classList.add('correct');
+                // 用户答对：用户选项即为正确答案，已经标记，无需额外操作
                 showFeedback('✓ 回答正确！', 'success');
             } else {
+                // 用户答错：将用户选项标记为红色
                 options[selectedAnswer].classList.add('incorrect');
                 showFeedback('✗ 回答错误', 'error');
             }
 
+            // 3. 显示题目描述（如果有）
             if (data.description) {
                 showFeedback(data.description, 'info');
             }
 
+            // 4. 禁用所有选项，启用下一题按钮
             options.forEach(opt => opt.style.pointerEvents = 'none');
             nextBtn.disabled = false;
 
             if (data.group_finished) {
                 nextBtn.textContent = '查看结果';
             }
-        } else {
-            showFeedback(data.message, 'error');
-            submitBtn.disabled = false;
         }
     } catch (err) {
         showFeedback('请求失败: ' + err.message, 'error');
@@ -715,28 +750,35 @@ async function submitAnswer() {
 }
 
     // 下一题
-    async function nextQuestion() {
-        const nextBtn = document.getElementById('next-btn');
-        if (nextBtn.textContent === '查看结果') {
-            // 直接获取当前组结果
-            showResult(currentGroup);
-            return;
-        }
-
-        // 否则加载下一题
-        const res = await fetch('?action=get_current');
-        const data = await res.json();
-
-        if (data.status === 'in_progress') {
-            currentGroup = data.group;
-            currentIndex = data.index;
-            currentQuestionId = data.question.id;
-            displayQuestion(data.question, currentIndex, data.total);
-        } else if (data.status === 'all_finished') {
-            // 意外情况，显示结果
-            showResult(data.groups[data.groups.length - 1]);
-        }
+   async function nextQuestion() {
+    const nextBtn = document.getElementById('next-btn');
+    if (nextBtn.textContent === '查看结果') {
+        showResult(currentGroup);
+        return;
     }
+
+    // 获取当前 URL 中的 group 参数
+    const urlParams = new URLSearchParams(window.location.search);
+    const groupParam = urlParams.get('group');
+    let apiUrl = '?action=get_current';
+    if (groupParam) {
+        apiUrl += '&group=' + groupParam;
+    }
+
+    const res = await fetch(apiUrl);
+    const data = await res.json();
+
+    if (data.status === 'in_progress') {
+        currentGroup = data.group;
+        currentIndex = data.index;
+        currentQuestionId = data.question.id;
+        displayQuestion(data.question, currentIndex, data.total);
+    } else if (data.status === 'all_finished') {
+        showResult(data.groups[data.groups.length - 1]);
+    } else if (data.status === 'finished_group') {
+        showResult(data.group);
+    }
+}
 
     // 显示某个组的结果
     async function showResult(group) {
@@ -780,9 +822,6 @@ async function submitAnswer() {
         fb.textContent = msg;
         fb.className = `feedback ${type}`;
         fb.style.display = 'block';
-        setTimeout(() => {
-            fb.style.display = 'none';
-        }, 3000);
     }
 
     // 页面加载
