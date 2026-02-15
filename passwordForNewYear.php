@@ -809,7 +809,7 @@ async function submitAnswer() {
                 });
             }
             document.getElementById('continue').addEventListener('click', () => {
-                window.location.href = 'witness.php';
+                window.location.href = '/splashs/splash3.php';
             });
         } else {
             container.innerHTML = '<p>没有结果</p>';
