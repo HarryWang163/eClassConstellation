@@ -261,7 +261,9 @@ if (!isLoggedIn()) {
         <div class="line" id="line5">和老师、</div>
         <div class="line" id="line6">和同学、</div>
         <div class="line" id="line7">和很多人。</div>
-        <div class="line" id="line8">三年时光似真似幻，却承载着整段青春的重量</div>
+        <div class="line special" id="line8">三年时光似真似幻，却承载着整段青春的重量</div>
+         <div class="line" id="line9">我们要时刻提醒我们，</div>
+        <div class="line" id="line10">也要提醒身边的人这一点。</div>
         <div class="footer-note" id="footer">
             <div class="back-link">
                 <a href="/splashs/splash7.php">✨ >>> ✨</a>
@@ -320,7 +322,9 @@ if (!isLoggedIn()) {
                 document.getElementById('line5'),
                 document.getElementById('line6'),
                 document.getElementById('line7'),
-                document.getElementById('line8')
+                document.getElementById('line8'),
+                document.getElementById('line9'),
+                document.getElementById('line10')
             ];
             const footer = document.getElementById('footer');
             let index = 0;

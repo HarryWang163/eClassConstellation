@@ -389,7 +389,7 @@ require_once __DIR__ . '/app/includes/headerWithoutBar.php';
                         您的浏览器不支持视频播放。
                     </video>
                 </div>
-                <p style="text-align:center; color:rgba(255,255,255,0.6); margin-top:20px;">点击播放，接收来自林老师的祝福( •̀ ω •́ )✧</p>
+                <p style="text-align:center; color:rgba(255,255,255,0.6); margin-top:20px;">点击播放，接收来自林老师的祝福( •̀ ω •́ )✧<br/>（但是因为ICP备案的问题这个视频恐怕不能通过正常手段国内访问<br/>呜呜呜）</p>
             `;
         } else {
             html = `

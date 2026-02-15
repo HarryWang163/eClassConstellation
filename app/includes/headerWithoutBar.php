@@ -6,6 +6,11 @@
     <link rel="icon" type="image/png" href="/images/e.png">
     <title>同在计划 | 时光同溯，星辰同辉</title>
     <style>
+        @font-face {
+            font-family: 'ShouXie';
+            src: url('/../fonts/shouxie.ttf') format('truetype');
+            font-display: swap;
+        }
         * {
             margin: 0;
             padding: 0;

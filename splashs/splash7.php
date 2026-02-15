@@ -20,7 +20,7 @@ if (!isLoggedIn()) {
             font-family: 'ShouXie';
             src: url('/../fonts/shouxie.ttf') format('truetype');
             font-display: swap;
-    }
+        }
         * {
             margin: 0;
             padding: 0;
@@ -254,21 +254,20 @@ if (!isLoggedIn()) {
     <div class="stars" id="stars"></div>
 
     <div class="splash-container">
-        <div class="line" id="line1">我们要时刻提醒我们，</div>
-        <div class="line" id="line2">也要提醒身边的人这一点。</div>
-        <div class="line" id="line3">当我们写着用厘米去计算的作业，听到脑海里模糊的上课铃与下课铃声</div>
-        <div class="line" id="line4">当我们在未来被各种DDL狂追，因为生活忙得不可开交的时候</div>
-        <div class="line" id="line5">我们总要记得</div>
-        <div class="line" id="line6">曾经所有并肩同在的瞬息</div>
-        <div class="line" id="line7">那些我们热爱过的人、事、物</div>
-        <div class="line" id="line8">我们携手努力、未来同赴的时光</div>
-        <div class="line" id="line9">不经意间想起</div>
-        <div class="line" id="line10">会重新在每一个陈旧的午后、倦怠的夜晚</div>
-        <div class="line" id="line11">点亮我们的生命</div>
-        <div class="line special" id="line12">让我们更加勇敢地去发光</div>
+       
+        <div class="line" id="line1">当我们写着用厘米去计算的作业，听到脑海里模糊的上课铃与下课铃声</div>
+        <div class="line" id="line2">当我们在未来被各种DDL狂追，因为生活忙得不可开交的时候</div>
+        <div class="line" id="line3">我们总要记得</div>
+        <div class="line" id="line4">曾经所有并肩同在的瞬息</div>
+        <div class="line" id="line5">那些我们热爱过的人、事、物</div>
+        <div class="line" id="line6">我们携手努力、未来同赴的时光</div>
+        <div class="line" id="line7">不经意间想起</div>
+        <div class="line" id="line8">会重新在每一个陈旧的午后、倦怠的夜晚</div>
+        <div class="line" id="line9">点亮我们的生命</div>
+        <div class="line special" id="line10">让我们更加勇敢地去发光</div>
         <div class="footer-note" id="footer">
             <div class="back-link">
-                <a href="/dashboard.php">✨ 我们同在 ✨</a>
+                <a href="/dashboard.php">✨ 新的一年，我们同在 ✨</a>
 
             </div>
         </div>
@@ -326,9 +325,7 @@ if (!isLoggedIn()) {
                 document.getElementById('line7'),
                 document.getElementById('line8'),
                 document.getElementById('line9'),
-                document.getElementById('line10'),
-                document.getElementById('line11'),
-                document.getElementById('line12')
+                document.getElementById('line10')
             ];
             const footer = document.getElementById('footer');
             let index = 0;

@@ -111,6 +111,7 @@ require_once __DIR__ . '/app/includes/headerWithoutBar.php';
         <!-- 创造内容步骤 -->
         <div class="step-content" id="creation">
             <div class="creation-container">
+                <h4>创建独属于你的图案！</h4>
                 <!-- 绘画模式（暂时只有绘画） -->
                 <div class="creation-content active" id="draw-content">
                     <div class="canvas-container">
@@ -736,11 +737,49 @@ require_once __DIR__ . '/app/includes/footer.php';
 
         document.getElementById('clear-canvas').addEventListener('click', clearCanvas);
 
+        // 鼠标事件
         drawingCanvas.addEventListener('mousedown', startDrawing);
         drawingCanvas.addEventListener('mousemove', draw);
         drawingCanvas.addEventListener('mouseup', stopDrawing);
         drawingCanvas.addEventListener('mouseout', stopDrawing);
+
+        // 触摸事件（移动端）
+        drawingCanvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+        drawingCanvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+        drawingCanvas.addEventListener('touchend', stopDrawing);
+        drawingCanvas.addEventListener('touchcancel', stopDrawing);
     }
+
+// 触摸开始处理
+function handleTouchStart(e) {
+    e.preventDefault(); // 阻止页面滚动
+    const touch = e.touches[0];
+    const rect = drawingCanvas.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    
+    isDrawing = true;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = brushSize;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+}
+
+// 触摸移动处理
+function handleTouchMove(e) {
+    e.preventDefault();
+    if (!isDrawing) return;
+    const touch = e.touches[0];
+    const rect = drawingCanvas.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    ctx.lineTo(x, y);
+    ctx.stroke();
+}
 
     function startDrawing(e) {
         isDrawing = true;

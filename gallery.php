@@ -108,7 +108,7 @@ $images = getImages();
 
 <?php
 // 引入公共头部
-require_once __DIR__ . '/app/includes/header.php';
+require_once __DIR__ . '/app/includes/headerWithoutBar.php';
 ?>
 
         <!-- 全局星光背景 -->
