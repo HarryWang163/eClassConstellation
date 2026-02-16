@@ -57,56 +57,65 @@ require_once __DIR__ . '/app/includes/headerWithoutBar.php';
     <div class="we-together" style="margin-top: 0;">
         <!-- 颜色选择步骤 -->
         <div class="step-content active" id="color-selection">
-            <div class="color-selection-container">
-                <h4>作为一颗星星，我的颜色是...</h4>
-                <div class="gradient-picker-container">
-                    <div class="preview-section">
-                        <div class="gradient-preview" id="gradient-preview"></div>
+        <div class="color-selection-container">
+            <h4>作为一颗星星，我的颜色是...</h4>
+
+            <!-- 预设渐变区域 -->
+            <div class="preset-section">
+                <h5>✨ 预设渐变</h5>
+                <div class="preset-grid" id="preset-grid">
+                    <!-- 预设色块将通过 JS 动态生成 -->
+                </div>
+            </div>
+
+            <!-- 自定义颜色按钮 -->
+            <button class="btn btn-toggle" id="toggle-custom">🎨 自定义颜色</button>
+
+            <!-- 自定义面板（默认收起） -->
+            <div class="custom-panel" id="custom-panel" style="display: none;">
+                <div class="gradient-bar-container">
+                    <div class="gradient-bar" id="gradient-bar"></div>
+                </div>
+                <div class="color-stop-controls" id="color-stop-controls">
+                    <h5>色标属性</h5>
+                    <div class="control-group">
+                        <label>颜色</label>
+                        <input type="color" id="color-picker" value="#ffd700">
                     </div>
-                    <div class="control-section">
-                        <div class="gradient-bar-container">
-                            <div class="gradient-bar" id="gradient-bar"></div>
+                    <div class="control-group">
+                        <label>位置</label>
+                        <div class="input-with-slider">
+                            <input type="range" id="position-slider" min="0" max="100" value="50">
+                            <input type="number" id="position-input" min="0" max="100" value="50">
+                            <span>%</span>
                         </div>
-                        <div class="color-stop-controls" id="color-stop-controls">
-                            <h5>色标属性</h5>
-                            <div class="control-group">
-                                <label>颜色</label>
-                                <input type="color" id="color-picker" value="#ffd700">
-                            </div>
-                            <div class="control-group">
-                                <label>位置</label>
-                                <div class="input-with-slider">
-                                    <input type="range" id="position-slider" min="0" max="100" value="50">
-                                    <input type="number" id="position-input" min="0" max="100" value="50">
-                                    <span>%</span>
-                                </div>
-                            </div>
-                            <div class="control-group">
-                                <label>透明度</label>
-                                <div class="input-with-slider">
-                                    <input type="range" id="opacity-slider" min="0" max="100" value="100">
-                                    <input type="number" id="opacity-input" min="0" max="100" value="100">
-                                    <span>%</span>
-                                </div>
-                            </div>
-                            <div class="control-group">
-                                <label>亮度</label>
-                                <div class="input-with-slider">
-                                    <input type="range" id="brightness-slider" min="0" max="100" value="50">
-                                    <input type="number" id="brightness-input" min="0" max="100" value="50">
-                                    <span>%</span>
-                                </div>
-                            </div>
+                    </div>
+                    <div class="control-group">
+                        <label>透明度</label>
+                        <div class="input-with-slider">
+                            <input type="range" id="opacity-slider" min="0" max="100" value="100">
+                            <input type="number" id="opacity-input" min="0" max="100" value="100">
+                            <span>%</span>
                         </div>
-                        <div class="action-buttons">
-                            <button class="btn" id="add-color-stop">添加色标</button>
-                            <button class="btn" id="remove-color-stop">删除选中色标</button>
+                    </div>
+                    <div class="control-group">
+                        <label>亮度</label>
+                        <div class="input-with-slider">
+                            <input type="range" id="brightness-slider" min="0" max="100" value="50">
+                            <input type="number" id="brightness-input" min="0" max="100" value="50">
+                            <span>%</span>
                         </div>
                     </div>
                 </div>
-                <button class="btn" id="next-to-creation">下一步：创造内容</button>
+                <div class="action-buttons">
+                    <button class="btn" id="add-color-stop">添加色标</button>
+                    <button class="btn" id="remove-color-stop">删除选中色标</button>
+                </div>
             </div>
+
+            <button class="btn" id="next-to-creation">下一步：创造内容</button>
         </div>
+    </div>
         
         <!-- 创造内容步骤 -->
         <div class="step-content" id="creation">
@@ -466,7 +475,63 @@ require_once __DIR__ . '/app/includes/footer.php';
         margin-left: auto;
         margin-right: auto;
     }
-    
+      /* 预设渐变区域 */
+    .preset-section {
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    .preset-section h5 {
+        font-size: 1.2rem;
+        color: #ffd700;
+        margin-bottom: 15px;
+    }
+    .preset-grid {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+        max-width: 600px;
+        margin: 0 auto 20px;
+    }
+    .preset-item {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 3px solid rgba(255,255,255,0.3);
+        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        background-size: cover;
+    }
+    .preset-item:hover {
+        transform: scale(1.1);
+        border-color: #ffd700;
+        box-shadow: 0 0 20px rgba(255,215,0,0.6);
+    }
+
+    /* 自定义面板切换按钮 */
+    .btn-toggle {
+        margin: 20px auto;
+        display: inline-block;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,215,0,0.4);
+        color: #fff;
+        padding: 10px 25px;
+        border-radius: 30px;
+        font-size: 1rem;
+        transition: all 0.3s;
+    }
+    .btn-toggle:hover {
+        background: rgba(255,215,0,0.2);
+        border-color: #ffd700;
+        transform: translateY(-2px);
+    }
+
+    /* 自定义面板 */
+    .custom-panel {
+        transition: all 0.3s ease;
+        margin-top: 20px;
+    }
     @media (max-width: 768px) {
         .future-container {
             padding: 25px;
@@ -495,6 +560,7 @@ require_once __DIR__ . '/app/includes/footer.php';
             flex-direction: column;
             align-items: center;
         }
+      
     }
 </style>
 
@@ -513,7 +579,25 @@ require_once __DIR__ . '/app/includes/footer.php';
     let ctx = null;
     let isDrawing = false;
     let brushSize = 5;
-
+    // 预设渐变色（格式：颜色1-颜色2）
+    const presetColors = [
+        "#EE9CA7-#FFDDE1",
+        "#F902FF-#00DBDE",
+        "#DD8DD8-#F5BDA1",
+        "#D39340-#FFD194",
+        "#FF9A9E-#F6E745",
+        "#9600FF-#E1E1E1",
+        "#EFBD8A-#D343BA",
+        "#E0B9FF-#FF9A9E",
+        "#0DCDA4-#C2FCD4",
+        "#BB73DF-#FF8DDB",
+        "#FFF886-#F072B6",
+        "#FDD819-#E04C4C",
+        "#F9957E-#F3F5D0",
+        "#4DA2CB-#67B26F",
+        "#BC95C6-#7DC4CC",
+        "#FF626E-#FFBE71"
+    ];
     // ================== 初始化 ==================
     window.addEventListener('load', function() {
         initGradientPicker();
@@ -653,6 +737,51 @@ require_once __DIR__ . '/app/includes/footer.php';
                 gradientStops[currentStopIndex].brightness = val;
                 updateGradientBar();
                 updateGradientPreview();
+            }
+        });
+
+        // 生成预设色块
+        const presetGrid = document.getElementById('preset-grid');
+        presetColors.forEach((colors, index) => {
+            const [color1, color2] = colors.split('-');
+            const presetItem = document.createElement('div');
+            presetItem.className = 'preset-item';
+            presetItem.style.background = `linear-gradient(135deg, ${color1}, ${color2})`;
+            presetItem.dataset.color1 = color1;
+            presetItem.dataset.color2 = color2;
+            presetItem.dataset.index = index;
+            presetItem.title = `${color1} → ${color2}`;
+            presetItem.addEventListener('click', function() {
+                // 应用预设：生成两个色标，位置0和100
+                gradientStops = [
+                    { color: color1, position: 0, opacity: 100, brightness: 50 },
+                    { color: color2, position: 100, opacity: 100, brightness: 50 }
+                ];
+                currentStopIndex = 0; // 选中第一个色标
+                updateGradientBar();
+                updateGradientPreview();
+                updateColorStopControls();
+
+                // 可选：自动收起自定义面板
+                const customPanel = document.getElementById('custom-panel');
+                if (customPanel.style.display !== 'none') {
+                    customPanel.style.display = 'none';
+                    document.getElementById('toggle-custom').textContent = '🎨 自定义颜色';
+                }
+            });
+            presetGrid.appendChild(presetItem);
+        });
+
+        // 自定义面板切换
+        const toggleBtn = document.getElementById('toggle-custom');
+        const customPanel = document.getElementById('custom-panel');
+        toggleBtn.addEventListener('click', function() {
+            if (customPanel.style.display === 'none') {
+                customPanel.style.display = 'block';
+                this.textContent = '🔽 收起自定义';
+            } else {
+                customPanel.style.display = 'none';
+                this.textContent = '🎨 自定义颜色';
             }
         });
     }

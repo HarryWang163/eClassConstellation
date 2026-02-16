@@ -453,7 +453,6 @@ require_once __DIR__ . '/app/includes/footer.php';
     .tooltip {
         position: absolute;
         left: 50%;
-        transform: translateX(-50%);
         background: rgba(255, 255, 255, 0.95);
         color: #333;
         padding: 12px 16px;
@@ -470,11 +469,6 @@ require_once __DIR__ . '/app/includes/footer.php';
         text-align: left;
         white-space: normal;
         word-break: break-word;
-    }
-        .canvas-element:hover .tooltip {
-        opacity: 1;
-        visibility: visible;
-        transform: translateX(-50%) translateY(0);
     }
     
     .tooltip .nickname {
@@ -509,14 +503,36 @@ require_once __DIR__ . '/app/includes/footer.php';
         /* 显示在上方 */
     .tooltip.tooltip-top {
         bottom: 110%;
-        transform: translateX(-50%) translateY(0);
+        transform:  translateY(0);
     }
 
     /* 显示在下方 */
     .tooltip.tooltip-bottom {
         top: 110%;
-        transform: translateX(-50%) translateY(0);
+        transform:  translateY(0);
     }
+
+    /* 水平方向定位 */
+    .tooltip-left {
+        left: 0;
+        transform: translateX(0);
+    }
+    .tooltip-right {
+        right: 0;
+        left: auto;
+        transform: translateX(0);
+    }
+    .tooltip-center {
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    /* 增加最大宽度，防止 tooltip 过宽 */
+    .tooltip {
+        max-width: 300px;
+        word-wrap: break-word;
+    }
+
 
     /* 悬停时显示 */
     .canvas-element:hover .tooltip {
@@ -712,11 +728,25 @@ require_once __DIR__ . '/app/includes/footer.php';
             const tooltip = document.createElement('div');
             tooltip.className = 'tooltip';
 
-            // 根据纵坐标判断显示位置（阈值 80 可根据实际 tooltip 高度调整）
+            // 垂直方向判断（阈值150可调整）
             if (element.pos_y < 150) {
                 tooltip.classList.add('tooltip-bottom');
             } else {
                 tooltip.classList.add('tooltip-top');
+            }
+
+            // 水平方向判断（画板宽度800，阈值100可调整）
+            const leftDistance = element.pos_x;
+            const rightDistance = 800 - element.pos_x;
+            if (leftDistance < 200) {
+                // 太靠左：左对齐
+                tooltip.classList.add('tooltip-left');
+            } else if (rightDistance < 200) {
+                // 太靠右：右对齐
+                tooltip.classList.add('tooltip-right');
+            } else {
+                // 正常居中
+                tooltip.classList.add('tooltip-center');
             }
 
             // 判断是否有留言数据
