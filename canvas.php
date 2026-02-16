@@ -316,6 +316,8 @@ require_once __DIR__ . '/app/includes/footer.php';
         width: 90%;
         color: #fff;
         box-shadow: 0 0 60px rgba(255,215,0,0.3);
+        max-height: 80vh;
+        overflow-y: auto;
     }
     .blessing-content h3 {
         color: #ffd700;
@@ -450,7 +452,6 @@ require_once __DIR__ . '/app/includes/footer.php';
     /* 改进的 tooltip 显示留言信息 */
     .tooltip {
         position: absolute;
-        bottom: 110%;
         left: 50%;
         transform: translateX(-50%);
         background: rgba(255, 255, 255, 0.95);
@@ -458,12 +459,10 @@ require_once __DIR__ . '/app/includes/footer.php';
         padding: 12px 16px;
         border-radius: 20px;
         font-size: 14px;
-        white-space: nowrap;
         z-index: 2000;
         opacity: 0;
         visibility: hidden;
         transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
-        transform: translateX(-50%) translateY(10px);
         pointer-events: none;
         box-shadow: 0 5px 20px rgba(0,0,0,0.3);
         border: 1px solid #ffd700;
@@ -472,8 +471,7 @@ require_once __DIR__ . '/app/includes/footer.php';
         white-space: normal;
         word-break: break-word;
     }
-    
-    .canvas-element:hover .tooltip {
+        .canvas-element:hover .tooltip {
         opacity: 1;
         visibility: visible;
         transform: translateX(-50%) translateY(0);
@@ -507,6 +505,23 @@ require_once __DIR__ . '/app/includes/footer.php';
         height: 100%;
         object-fit: cover;
         border-radius: 10px;
+    }
+        /* 显示在上方 */
+    .tooltip.tooltip-top {
+        bottom: 110%;
+        transform: translateX(-50%) translateY(0);
+    }
+
+    /* 显示在下方 */
+    .tooltip.tooltip-bottom {
+        top: 110%;
+        transform: translateX(-50%) translateY(0);
+    }
+
+    /* 悬停时显示 */
+    .canvas-element:hover .tooltip {
+        opacity: 1;
+        visibility: visible;
     }
     
     @keyframes fadeIn {
@@ -697,6 +712,14 @@ require_once __DIR__ . '/app/includes/footer.php';
             const tooltip = document.createElement('div');
             tooltip.className = 'tooltip';
 
+            // 根据纵坐标判断显示位置（阈值 80 可根据实际 tooltip 高度调整）
+            if (element.pos_y < 150) {
+                tooltip.classList.add('tooltip-bottom');
+            } else {
+                tooltip.classList.add('tooltip-top');
+            }
+
+            // 判断是否有留言数据
             if (element.nickname && element.blessing_content && element.blessing_place) {
                 tooltip.innerHTML = `
                     <span class="nickname">${escapeHtml(element.nickname)}</span><span class="username-small">@${escapeHtml(element.username)}</span>
@@ -704,7 +727,8 @@ require_once __DIR__ . '/app/includes/footer.php';
                     <div class="place">${escapeHtml(element.blessing_place)}</div>
                 `;
             } else {
-                tooltip.innerHTML = `<div style="color:#888;">该用户暂无留言</div>`;
+                // 没有留言时只显示用户名
+                tooltip.innerHTML = `<span class="nickname">${escapeHtml(element.username)}</span>`;
             }
             elementDiv.appendChild(tooltip);
 
