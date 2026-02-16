@@ -246,7 +246,7 @@ require_once __DIR__ . '/app/includes/header.php';
     
     <!-- 四个活动图片水平一排 -->
     <div class="activities-row">
-        <a href="passdemo.php" class="activity-link">
+        <a href="passwordForNewYear.php" class="activity-link">
         <div class="activity-item">
             <img src="images/icon-password.png" alt="同在密码" class="activity-icon-img">
         </div>
@@ -261,7 +261,7 @@ require_once __DIR__ . '/app/includes/header.php';
             <img src="images/icon-stars.png" alt="星光互映" class="activity-icon-img">
         </div>
         </a>
-        <a href="future.php" class="activity-link">
+        <a href="futureForNewYear.php" class="activity-link">
         <div class="activity-item">
             <img src="images/icon-future.png" alt="星屿共筑" class="activity-icon-img">
         </div>

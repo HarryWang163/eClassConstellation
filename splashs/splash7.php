@@ -4,9 +4,19 @@ require_once __DIR__ . '/../app/includes/auth.php';
 
 // 检查是否已登录
 if (!isLoggedIn()) {
-    // 未登录，显示登录提示
     redirectToLogin();
 }
+
+// 获取当前用户ID
+$user_id = $_SESSION['user_id'] ?? 0;
+
+// 更新 user_finished 为 1
+require_once __DIR__ . '/../app/config/database.php';
+$db = getDB();
+$stmt = $db->prepare("UPDATE users SET user_finished = 1 WHERE id = ?");
+$stmt->execute([$user_id]);
+
+// 后续原有页面输出保持不变...
 ?>
 
 <!DOCTYPE html>

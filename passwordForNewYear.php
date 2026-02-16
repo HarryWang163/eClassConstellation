@@ -27,28 +27,48 @@ $current_user_id = $_SESSION['user_id'] ?? 0;
 function getCurrentProgress($user_id) {
     $db = getDB();
 
-    // 1. 获取所有已完成组（user_score 中存在记录）
+    // 获取所有已完成组（user_score 中存在记录）
     $stmt = $db->prepare("SELECT question_group FROM user_score WHERE user_id = ? ORDER BY question_group");
     $stmt->execute([$user_id]);
     $finishedGroups = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-    // 2. 如果没有完成任何组，从组1第一题开始
+    // 如果没有完成任何组，检查第一组是否有答题记录
     if (empty($finishedGroups)) {
-        return ['group' => 1, 'index' => 0];
+        $currentGroup = 1;
+        // 查询第一组已答题数
+        $stmt = $db->prepare("
+            SELECT COUNT(*) FROM user_answer 
+            WHERE user_id = ? AND question_id IN (
+                SELECT id FROM questions WHERE groupAffiliation = ?
+            )
+        ");
+        $stmt->execute([$user_id, $currentGroup]);
+        $answered = $stmt->fetchColumn();
+
+        if ($answered > 0) {
+            // 已有答题记录，继续该组
+            return ['group' => $currentGroup, 'index' => $answered];
+        } else {
+            // 完全未开始
+            return ['group' => $currentGroup, 'index' => 0];
+        }
     }
 
-    // 3. 已完成组的最大值
+    // 有已完成组
     $lastFinished = max($finishedGroups);
 
-    // 4. 如果全部完成（假设3组）
-    if ($lastFinished == 3) {
-        return null; // 全部完成
+    // 获取总组数（从 questions 表查询最大组号，或设为常量 5）
+    $stmt = $db->query("SELECT MAX(groupAffiliation) FROM questions");
+    $totalGroups = (int)$stmt->fetchColumn();
+
+    // 如果已完成最后一组，则全部完成
+    if ($lastFinished >= $totalGroups) {
+        return null;
     }
 
-    // 5. 下一组
     $nextGroup = $lastFinished + 1;
 
-    // 6. 查询下一组已答题目数
+    // 查询下一组已答题数
     $stmt = $db->prepare("
         SELECT COUNT(*) FROM user_answer 
         WHERE user_id = ? AND question_id IN (
@@ -65,7 +85,7 @@ function getCurrentProgress($user_id) {
             // 递归重新计算进度
             return getCurrentProgress($user_id);
         } catch (Exception $e) {
-            // 自动完成失败，至少让用户看到该组的结果页
+            // 自动完成失败，返回该组的结果页
             return ['status' => 'finished_group', 'group' => $nextGroup];
         }
     } elseif ($answered > 0) {
@@ -76,7 +96,6 @@ function getCurrentProgress($user_id) {
         return ['status' => 'finished_group', 'group' => $lastFinished];
     }
 }
-
 /**
  * 获取指定组和索引的题目
  */
@@ -614,6 +633,38 @@ require_once __DIR__ . '/app/includes/headerWithoutBar.php';
     font-style: italic;
     text-shadow: 0 0 10px rgba(255,215,0,0.5);
 }
+.result-badge {
+    margin: 30px 0;
+    padding: 25px;
+    background: rgba(255, 215, 0, 0.1);
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    border-radius: 20px;
+    text-align: center;
+    backdrop-filter: blur(5px);
+}
+.badge-title {
+    font-size: 2.5rem;
+    color: #ffd700;
+    margin-bottom: 15px;
+    text-shadow: 0 0 20px rgba(255,215,0,0.5);
+    font-family: 'ShouXie', 'Microsoft YaHei', serif;
+}
+.badge-comment {
+    font-size: 1.2rem;
+    line-height: 1.8;
+    color: #f8f9fa;
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: justify;
+}
+@media (max-width: 768px) {
+    .badge-title {
+        font-size: 2rem;
+    }
+    .badge-comment {
+        font-size: 1rem;
+    }
+}
 </style>
 
 <main>
@@ -814,54 +865,64 @@ async function submitAnswer() {
 
     // 显示某个组的结果
     async function showResult(group) {
-    const res = await fetch(`?action=get_result&group=${group}`);
-    const data = await res.json();
+        const res = await fetch(`?action=get_result&group=${group}`);
+        const data = await res.json();
 
-    if (data.status === 'result') {
-        const r = data.result;
-        const overall = data.overall; // { total_answered, total_correct }
-        const totalAnswered = overall.total_answered;
-        const totalCorrect = overall.total_correct;
-        const percent = totalAnswered > 0 ? (totalCorrect / totalAnswered * 100).toFixed(1) : 0;
+        if (data.status === 'result') {
+            const r = data.result;
+            const overall = data.overall; // { total_answered, total_correct }
+            const totalAnswered = overall.total_answered;
+            const totalCorrect = overall.total_correct;
+            const percent = totalAnswered > 0 ? (totalCorrect / totalAnswered * 100).toFixed(1) : 0;
 
-        // 评语
-        let comment = '';
-        if (percent < 60) {
-            comment = '再接再厉，下次会更好！';
-        } else if (percent >= 60 && percent < 80) {
-            comment = '不错哦，继续加油！';
-        } else {
-            comment = '太棒了，你是班级之星！';
-        }
+            // 根据正确率确定称号和旁批
+            let title = '';
+            let comment = '';
+            if (percent < 60) {
+                title = '笨小孩';
+                comment = '“笨小孩需要努力奔跑。”<br>可不要小看了努力奔跑的笨小孩！<br>他们的每一步都踩得比谁都实在，每一滴汗都落得比谁都真切。<br>只是，全力奔跑的同时，别忘了偶尔放慢脚步——<br>抬起头，看看班级的角落，看看身边同行的人，看看漫天的朝霞。<br>因为奔跑的意义，不只是抵达，更是路上遇见的这一切。';
+            } else if (percent >= 60 && percent < 80) {
+                title = '酋长';
+                comment = '“土生土长，原汁原味。”<br>鉴定为纯度极高的11班土著！<br>不悬浮，不设防，带着泥土的气息和日头的温度。<br>他们互相扶持着走过每一个平平常常的日子，<br>那些不经意间冒出来的幽默与快乐，悄悄织成了我们之间的纽带，<br>让我们上下一心，团结有爱。';
+            } else if (percent >= 80 && percent < 100) {
+                title = '心灵捕手';
+                comment = '“时光与记忆，永不消散。”<br>这群人不止是融入了11班，更是用心看着11班。<br>他们记得角落里的细节，记得某个午后谁说过什么话，记得那些稍纵即逝的笑脸。<br>把每一分日常都尽收眼底，把每一寸光阴都悄悄收藏。<br>耐心而细腻的人啊，终会看见花开——<br>因为花本来就在，只是需要一双同在的眼睛。';
+            } else if (percent >= 100) {
+                title = '圣斗士';
+                comment = '“无敌是多么寂寞。”<br>满分选手，恐怖如斯。<br>对11班了如指掌，满分是题目的极限，不是他们的极限。<br>但更难得的是，他们从未走远——<br>他们是班魂的守护者，一次次点燃我们共同的记忆，<br>默默守望，永远与11班同在。';
+            }
 
-        container.innerHTML = `
-            <div class="result-container">
-                <h2>第 ${r.group} 题组 结果</h2>
-                <div class="result-stats">
-                    <p>本题组答对 <span class="highlight">${r.correct}</span> 题</p>
-                    <p>得分 <span class="highlight">${r.score}</span> 分</p>
-                    <p>当前正确率: <span class="highlight">${percent}%</span> (${totalCorrect}/${totalAnswered})</p>
-                    <p class="comment">${comment}</p>
-                    <p>总答题数 <span class="highlight">${totalAnswered}</span></p>
+            container.innerHTML = `
+                <div class="result-container">
+                    <h2>第 ${r.group} 题组 结果</h2>
+                    <div class="result-stats">
+                        <p>本题组答对 <span class="highlight">${r.correct}</span> 题</p>
+                        <p>得分 <span class="highlight">${r.score}</span> 分</p>
+                        <p>当前正确率: <span class="highlight">${percent}%</span> (${totalCorrect}/${totalAnswered})</p>
+                        <p>总答题数 <span class="highlight">${totalAnswered}</span></p>
+                    </div>
+                    <div class="result-badge">
+                        <h3 class="badge-title">${title}</h3>
+                        <div class="badge-comment">${comment}</div>
+                    </div>
+                    <div class="result-actions">
+                        ${r.group < 5 ? '<button class="btn" id="next-group">再来一个题组</button>' : ''}
+                        <button class="btn btn-secondary" id="continue">继续下一个环节</button>
+                    </div>
                 </div>
-                <div class="result-actions">
-                    ${r.group < 5 ? '<button class="btn" id="next-group">再来一个题组</button>' : ''}
-                    <button class="btn btn-secondary" id="continue">继续下一个环节</button>
-                </div>
-            </div>
-        `;
-        if (r.group < 5) {
-            document.getElementById('next-group').addEventListener('click', () => {
-                window.location.href = `?group=${r.group + 1}`;
+            `;
+            if (r.group < 5) {
+                document.getElementById('next-group').addEventListener('click', () => {
+                    window.location.href = `?group=${r.group + 1}`;
+                });
+            }
+            document.getElementById('continue').addEventListener('click', () => {
+                window.location.href = '/splashs/splash3.php';
             });
+        } else {
+            container.innerHTML = '<p>没有结果</p>';
         }
-        document.getElementById('continue').addEventListener('click', () => {
-            window.location.href = '/splashs/splash3.php';
-        });
-    } else {
-        container.innerHTML = '<p>没有结果</p>';
     }
-}
 
     // 显示反馈
     function showFeedback(msg, type) {

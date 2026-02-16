@@ -254,7 +254,7 @@ if (!isLoggedIn()) {
     <div class="stars" id="stars"></div>
 
     <div class="splash-container">
-        <div class="line" id="line1"><span class = 'special'>“同在计划”</span>的全部活动，至此落下帷幕</div>
+        <div class="line" id="line1"><span class = 'special'>“同在计划”</span>新年活动，至此落下帷幕</div>
         <div class="line" id="line2">正如所有的故事，终究需要一个结尾</div>
         <div class="line" id="line3">高中生活已然过半</div>
         <div class="line" id="line4">也许再过不久，我们就会面临分别</div>

@@ -59,7 +59,10 @@ require_once __DIR__ . '/app/includes/headerWithoutBar.php';
         <div class="step-content active" id="color-selection">
         <div class="color-selection-container">
             <h4>作为一颗星星，我的颜色是...</h4>
-
+            <!-- 预览区域 -->
+            <div class="preview-section">
+                <div class="gradient-preview" id="gradient-preview"></div>
+            </div>
             <!-- 预设渐变区域 -->
             <div class="preset-section">
                 <h5>✨ 预设渐变</h5>

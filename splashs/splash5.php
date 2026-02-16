@@ -332,7 +332,7 @@ if (!isLoggedIn()) {
                 } else {
                     setTimeout(() => {
                         footer.classList.add('show');
-                    }, 2400);
+                    }, 1800);
                 }
             }
 
