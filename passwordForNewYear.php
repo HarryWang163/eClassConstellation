@@ -32,44 +32,48 @@ function getCurrentProgress($user_id) {
     $stmt->execute([$user_id]);
     $finishedGroups = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-    // 2. 确定当前应进行的组（如果没有完成组，从组1开始；否则从已完成组的下一组开始）
-    $currentGroup = empty($finishedGroups) ? 1 : max($finishedGroups) + 1;
-
-    // 如果超过总组数（假设有3组），则全部完成
-    if ($currentGroup > 5) {
-        return null;
+    // 2. 如果没有完成任何组，从组1第一题开始
+    if (empty($finishedGroups)) {
+        return ['group' => 1, 'index' => 0];
     }
 
-    // 3. 查询当前组已经回答了多少题
+    // 3. 已完成组的最大值
+    $lastFinished = max($finishedGroups);
+
+    // 4. 如果全部完成（假设3组）
+    if ($lastFinished == 3) {
+        return null; // 全部完成
+    }
+
+    // 5. 下一组
+    $nextGroup = $lastFinished + 1;
+
+    // 6. 查询下一组已答题目数
     $stmt = $db->prepare("
         SELECT COUNT(*) FROM user_answer 
         WHERE user_id = ? AND question_id IN (
             SELECT id FROM questions WHERE groupAffiliation = ?
         )
     ");
-    $stmt->execute([$user_id, $currentGroup]);
+    $stmt->execute([$user_id, $nextGroup]);
     $answered = $stmt->fetchColumn();
 
-    // 4. 根据已答数量返回不同状态
     if ($answered >= 10) {
-        // 异常情况：已答满10题但 user_score 中无记录（可能是之前逻辑遗漏）
-        // 尝试自动完成组并记录分数
+        // 异常：已答满10题但未记录分数，尝试自动完成
         try {
-            finishGroup($user_id, $currentGroup);
-            // 完成后推进到下一组
-            $currentGroup++;
-            if ($currentGroup > 3) return null;
-            return ['group' => $currentGroup, 'index' => 0];
+            finishGroup($user_id, $nextGroup);
+            // 递归重新计算进度
+            return getCurrentProgress($user_id);
         } catch (Exception $e) {
-            // 如果自动完成失败，至少让用户看到当前组的结果页
-            return ['status' => 'finished_group', 'group' => $currentGroup];
+            // 自动完成失败，至少让用户看到该组的结果页
+            return ['status' => 'finished_group', 'group' => $nextGroup];
         }
     } elseif ($answered > 0) {
-        // 已开始但未完成，返回下一题索引（从0开始）
-        return ['group' => $currentGroup, 'index' => $answered];
+        // 已开始但未完成，返回下一题索引
+        return ['group' => $nextGroup, 'index' => $answered];
     } else {
-        // 未开始当前组，从第一题开始
-        return ['group' => $currentGroup, 'index' => 0];
+        // 未开始下一组，返回上一组的结果页
+        return ['status' => 'finished_group', 'group' => $lastFinished];
     }
 }
 
@@ -189,6 +193,27 @@ function getFinishedGroups($user_id) {
     $stmt = $db->prepare("SELECT question_group FROM user_score WHERE user_id = ? ORDER BY question_group");
     $stmt->execute([$user_id]);
     return $stmt->fetchAll(PDO::FETCH_COLUMN);
+}
+
+/**
+ * 获取用户所有答题的整体统计数据
+ */
+function getOverallStats($user_id) {
+    $db = getDB();
+    // 总答题数
+    $stmt = $db->prepare("SELECT COUNT(*) FROM user_answer WHERE user_id = ?");
+    $stmt->execute([$user_id]);
+    $total_answered = $stmt->fetchColumn();
+
+    // 总正确数
+    $stmt = $db->prepare("SELECT COUNT(*) FROM user_answer WHERE user_id = ? AND if_right = 1");
+    $stmt->execute([$user_id]);
+    $total_correct = $stmt->fetchColumn();
+
+    return [
+        'total_answered' => (int)$total_answered,
+        'total_correct' => (int)$total_correct
+    ];
 }
 
 // 在文件开头添加错误控制（确保不输出错误到响应）
@@ -336,27 +361,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get_current') {
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get_result') {
     header('Content-Type: application/json');
     try {
-    $group = intval($_GET['group'] ?? 0);
-    if (!$group) {
-        // 如果没有指定组，则返回最近完成的一个组
-        $finished = getFinishedGroups($current_user_id);
-        if (empty($finished)) {
+        $group = intval($_GET['group'] ?? 0);
+        if (!$group) {
+            // 如果没有指定组，则返回最近完成的一个组
+            $finished = getFinishedGroups($current_user_id);
+            if (empty($finished)) {
+                echo json_encode(['status' => 'no_result']);
+                exit;
+            }
+            $group = end($finished); // 最后一个完成的组
+        }
+
+        $result = getGroupResult($current_user_id, $group);
+        if (!$result) {
             echo json_encode(['status' => 'no_result']);
             exit;
         }
-        $group = end($finished); // 最后一个完成的组
-    }
 
-    $result = getGroupResult($current_user_id, $group);
-    if (!$result) {
-        echo json_encode(['status' => 'no_result']);
-        exit;
-    }
+        // 获取整体统计数据
+        $overall = getOverallStats($current_user_id);
 
-    echo json_encode([
-        'status' => 'result',
-        'result' => $result
-    ]);
+        echo json_encode([
+            'status' => 'result',
+            'result' => $result,
+            'overall' => $overall
+        ]);
     } catch (PDOException $e) {
         echo json_encode(['success' => false, 'message' => '数据库错误：' . $e->getMessage()]);
     } catch (Exception $e) {
@@ -578,6 +607,13 @@ require_once __DIR__ . '/app/includes/headerWithoutBar.php';
         .navigation { flex-direction: column; gap: 15px; }
         .result-actions { flex-direction: column; }
     }
+    .comment {
+    font-size: 1.3rem;
+    color: #ffd700;
+    margin: 20px 0;
+    font-style: italic;
+    text-shadow: 0 0 10px rgba(255,215,0,0.5);
+}
 </style>
 
 <main>
@@ -778,39 +814,54 @@ async function submitAnswer() {
 
     // 显示某个组的结果
     async function showResult(group) {
-        const res = await fetch(`?action=get_result&group=${group}`);
-        const data = await res.json();
+    const res = await fetch(`?action=get_result&group=${group}`);
+    const data = await res.json();
 
-        if (data.status === 'result') {
-            const r = data.result;
-            container.innerHTML = `
-                <div class="result-container">
-                    <h2>第 ${r.group} 题组 结果</h2>
-                    <div class="result-stats">
-                        <p>本题组答对 <span class="highlight">${r.correct}</span> 题</p>
-                        <p>得分 <span class="highlight">${r.score}</span> 分</p>
-                    <!--    <p>正确率 <span class="highlight">${(r.correct/10*100).toFixed(1)}%</span></p> -->
-                    <!--    <p>超过了 <span class="highlight">${r.percent}%</span> 的选手</p> -->
-                        <p>总答题数 <span class="highlight">10</span></p>
-                    </div>
-                    <div class="result-actions">
-                        ${r.group < 5 ? '<button class="btn" id="next-group">再来一个题组</button>' : ''}
-                        <button class="btn btn-secondary" id="continue">继续下一个环节</button>
-                    </div>
-                </div>
-            `;
-            if (r.group < 5) {
-                document.getElementById('next-group').addEventListener('click', () => {
-                    window.location.href = `?group=${r.group + 1}`;
-                });
-            }
-            document.getElementById('continue').addEventListener('click', () => {
-                window.location.href = '/splashs/splash3.php';
-            });
+    if (data.status === 'result') {
+        const r = data.result;
+        const overall = data.overall; // { total_answered, total_correct }
+        const totalAnswered = overall.total_answered;
+        const totalCorrect = overall.total_correct;
+        const percent = totalAnswered > 0 ? (totalCorrect / totalAnswered * 100).toFixed(1) : 0;
+
+        // 评语
+        let comment = '';
+        if (percent < 60) {
+            comment = '再接再厉，下次会更好！';
+        } else if (percent >= 60 && percent < 80) {
+            comment = '不错哦，继续加油！';
         } else {
-            container.innerHTML = '<p>没有结果</p>';
+            comment = '太棒了，你是班级之星！';
         }
+
+        container.innerHTML = `
+            <div class="result-container">
+                <h2>第 ${r.group} 题组 结果</h2>
+                <div class="result-stats">
+                    <p>本题组答对 <span class="highlight">${r.correct}</span> 题</p>
+                    <p>得分 <span class="highlight">${r.score}</span> 分</p>
+                    <p>当前正确率: <span class="highlight">${percent}%</span> (${totalCorrect}/${totalAnswered})</p>
+                    <p class="comment">${comment}</p>
+                    <p>总答题数 <span class="highlight">${totalAnswered}</span></p>
+                </div>
+                <div class="result-actions">
+                    ${r.group < 5 ? '<button class="btn" id="next-group">再来一个题组</button>' : ''}
+                    <button class="btn btn-secondary" id="continue">继续下一个环节</button>
+                </div>
+            </div>
+        `;
+        if (r.group < 5) {
+            document.getElementById('next-group').addEventListener('click', () => {
+                window.location.href = `?group=${r.group + 1}`;
+            });
+        }
+        document.getElementById('continue').addEventListener('click', () => {
+            window.location.href = '/splashs/splash3.php';
+        });
+    } else {
+        container.innerHTML = '<p>没有结果</p>';
     }
+}
 
     // 显示反馈
     function showFeedback(msg, type) {

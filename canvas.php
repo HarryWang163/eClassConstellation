@@ -151,7 +151,7 @@ require_once __DIR__ . '/app/includes/headerWithoutBar.php';
         <h3>写下你的留言</h3>
         <div class="form-group">
             <label>昵称</label>
-            <input type="text" id="blessing-nickname" value="<?php echo htmlspecialchars($_SESSION['username']); ?>">
+            <input type="text" id="blessing-nickname">
         </div>
         <div class="form-group">
             <label>留言内容</label>
