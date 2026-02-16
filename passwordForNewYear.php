@@ -36,7 +36,7 @@ function getCurrentProgress($user_id) {
     $currentGroup = empty($finishedGroups) ? 1 : max($finishedGroups) + 1;
 
     // 如果超过总组数（假设有3组），则全部完成
-    if ($currentGroup > 3) {
+    if ($currentGroup > 5) {
         return null;
     }
 
@@ -794,12 +794,12 @@ async function submitAnswer() {
                         <p>总答题数 <span class="highlight">10</span></p>
                     </div>
                     <div class="result-actions">
-                        ${r.group < 3 ? '<button class="btn" id="next-group">再来一个题组</button>' : ''}
+                        ${r.group < 5 ? '<button class="btn" id="next-group">再来一个题组</button>' : ''}
                         <button class="btn btn-secondary" id="continue">继续下一个环节</button>
                     </div>
                 </div>
             `;
-            if (r.group < 3) {
+            if (r.group < 5) {
                 document.getElementById('next-group').addEventListener('click', () => {
                     window.location.href = `?group=${r.group + 1}`;
                 });

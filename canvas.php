@@ -553,7 +553,7 @@ require_once __DIR__ . '/app/includes/footer.php';
             this.elements = [];
             this.isMobile = window.innerWidth <= 768;
             this.isPlacementMode = false; // 放置模式开关
-
+            this.userHasElement = false; // 新增：当前用户是否有图案
             this.init();
         }
 
@@ -666,30 +666,20 @@ require_once __DIR__ . '/app/includes/footer.php';
         }
 
         loadElements() {
-            fetch('canvas.php?action=get_canvas_elements')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    this.elements = data.elements;
-                    this.renderAllElements();
-
-                    // 检查当前用户是否有元素
-                    const hasUserElement = this.elements.some(el => el.user_id == currentUserId);
-                    const overlay = document.getElementById('guide-overlay');
-                    if (overlay && hasUserElement) {
-                        overlay.classList.add('hidden');
-                    }
-
-                    // 如果没有当前用户的元素，自动进入放置模式
-                    if (!hasUserElement) {
-                        this.enterPlacementMode();
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Error loading elements:', error);
-            });
-        }
+        fetch('canvas.php?action=get_canvas_elements')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                this.elements = data.elements;
+                this.renderAllElements();
+                // 检查当前用户是否有图案
+                this.userHasElement = this.elements.some(el => el.user_id == currentUserId);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading elements:', error);
+        });
+    }
 
         renderAllElements() {
             this.canvasBoard.innerHTML = '';
@@ -752,6 +742,12 @@ require_once __DIR__ . '/app/includes/footer.php';
     if (overlay) {
         overlay.addEventListener('click', function() {
             this.classList.add('hidden');
+            // 如果用户还没有放置图案，自动进入放置模式
+            if (canvasManager && !canvasManager.userHasElement) {
+                canvasManager.enterPlacementMode();
+                // 可选：短暂提示
+                // alert('点击画板任意位置放置你的星空图案');
+            }
         });
     }
 
